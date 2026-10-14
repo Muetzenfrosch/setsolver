@@ -70,9 +70,11 @@ regelt das Caching. Nötig sind `AllowOverride All` für das Verzeichnis sowie `
    kaum gesättigt und im Vergleich zur Umgebung hell genug ist (so stören Schatten und Lichtverläufe weniger);
    starke Helligkeitskanten trennen dicht liegende Karten. Zusammenhängende Flächen mit Rechteckform und
    passendem Seitenverhältnis gelten als Karten, zusammengewachsene Flächen werden schrittweise getrennt.
-   Die Ecken werden über an die Kanten angepasste Geraden bestimmt, damit auch schräg fotografierte Karten passen.
+   Schräg fotografierte Karten erscheinen als Trapez; sie zählen, wenn ihr Umriss zu einem Viereck mit geraden
+   Kanten passt. Die Ecken werden über an die Kanten angepasste Geraden bestimmt.
 3. **Entzerren**: Jede Karte wird per Homographie in ein Hochformat-Bild von 160 × 250 Pixeln umgerechnet.
-4. **Klassifizieren** (nach Weißabgleich auf das Kartenpapier):
+4. **Klassifizieren** (nach Weißabgleich auf das Kartenpapier; Schatten auf der Karte werden herausgerechnet,
+   weil sie das Papier nur dunkler, aber nicht farbig machen):
    - *Anzahl*: Zahl der Symbol-Silhouetten.
    - *Form*: Konvexität (Wellen sind nicht konvex) und Flächenanteil im umgebenden Rechteck (Rauten ≈ 50 %, Ovale ≈ 90 %).
    - *Füllung*: Farbanteil im Inneren der Symbole relativ zum Umriss (voll ≈ 1, gestreift ≈ 0,3, leer ≈ 0).
@@ -84,11 +86,12 @@ oder entfernen, Karten können auch von Hand hinzugefügt werden.
 
 ### Grenzen und nächste Schritte
 
-Die Schwellwerte sind an 15 echten Fotos (Kunstlicht, 189 Karten) eingestellt, die als Testdaten in
-`tests/SetGameSolver.Core.Tests/Photos` liegen; `labels.txt` beschreibt jede Auslage zeilenweise
-(z. B. `2RsO` = zwei rote volle Ovale; Farben R/G/P, Füllung s/t/o = voll/gestreift/leer, Formen D/O/S).
-Stand: 182 Karten richtig, 1 falsch (als unsicher markiert), 6 nicht gefunden – meist wegen harter Schatten
-oder Spiegelungen auf Folie. Neue Fotos (z. B. bei Tageslicht) einfach dazulegen und beschriften.
+Die Schwellwerte sind an 27 echten Fotos (Kunstlicht, 333 Karten auf Holz, Fliesen, Glas, Teppich und Decke)
+eingestellt, die als Testdaten in `tests/SetGameSolver.Core.Tests/Photos` liegen; `labels.txt` beschreibt jede
+Auslage zeilenweise (z. B. `2RsO` = zwei rote volle Ovale; Farben R/G/P, Füllung s/t/o = voll/gestreift/leer,
+Formen D/O/S). Stand: 322 Karten richtig, 1 falsch (als unsicher markiert), 10 nicht gefunden – meist wegen harter
+Schatten, Spiegelungen auf Folie oder hellem Untergrund, der mit Karten verschmilzt. Neue Fotos (z. B. bei
+Tageslicht) einfach dazulegen und beschriften.
 
-Am besten funktioniert die Erkennung, wenn die Karten auf einem dunkleren, einfarbigen Untergrund liegen, sich nicht
-berühren und von oben ohne harte Schatten oder Spiegelungen fotografiert werden.
+Am besten funktioniert die Erkennung, wenn sich die Karten nicht berühren und von oben ohne harte Schatten oder
+Spiegelungen fotografiert werden. Der Untergrund darf gemustert sein, sollte aber nicht so hell glänzen wie die Karten.

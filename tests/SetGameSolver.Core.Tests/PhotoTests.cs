@@ -14,9 +14,9 @@ public class PhotoTests(ITestOutputHelper output)
 {
     private static readonly string PhotoDir = Path.Combine(AppContext.BaseDirectory, "Photos");
 
-    // Stand 14.10.2026 (Kunstlicht-Fotos): 182 von 189 Karten richtig, 1 falsch, 6 nicht gefunden.
+    // Stand 14.10.2026 (27 Kunstlicht-Fotos): 322 von 333 Karten richtig, 1 falsch, 10 nicht gefunden.
     // Die Grenzen schützen vor Verschlechterungen; bei Verbesserungen bitte nachziehen.
-    private const int MinCorrect = 180;
+    private const int MinCorrect = 320;
     private const int MaxWrong = 2;
 
     [Fact]
@@ -27,12 +27,14 @@ public class PhotoTests(ITestOutputHelper output)
         {
             var image = Load(Path.Combine(PhotoDir, name + ".jpg"));
             var detected = SetRecognizer.Recognize(image);
-            var ok = detected.Count(d => expected.Contains(d.Card));
+            // Doppelt erkannte Karten zählen als Fehler.
+            var ok = detected.Select(d => d.Card).Distinct().Count(expected.Contains);
             var bad = detected.Where(d => !expected.Contains(d.Card)).ToList();
+            var duplicates = detected.Count - ok - bad.Count;
             correct += ok;
-            wrong += bad.Count;
+            wrong += bad.Count + duplicates;
             total += expected.Count;
-            output.WriteLine($"{name}: {ok}/{expected.Count} richtig, {bad.Count} falsch");
+            output.WriteLine($"{name}: {ok}/{expected.Count} richtig, {bad.Count} falsch, {duplicates} doppelt");
             foreach (var d in bad)
                 output.WriteLine($"   falsch: {d.Card} {d.Features}");
 

@@ -10,6 +10,12 @@ public static class CardDetector
     private const double MinPaperScore = 0.2;   // absolute Untergrenze (0..1) für Kartenpapier
     private const double PaperRatio = 0.45;     // Anteil der örtlichen Helligkeits-Obergrenze
     private const double EdgeThreshold = 0.35;  // Sobel-Betrag relativ zur örtlichen Obergrenze
+    // Schrägansicht: Hüllfläche höchstens 3 % größer als das angepasste Viereck (Karten: 1,00 bis 1,03),
+    // Seitenverhältnis weiter gefasst, weil die Perspektive Karten stauchen kann.
+    private const double MaxTrapezoidFit = 1.03;
+    private const double MinSkewAspect = 1.3;
+    private const double MaxSkewAspect = 2.3;
+    private const double MaxTaper = 1.4;
 
     /// <summary>Kartenmaske zur Fehlersuche.</summary>
     public static BinaryMask DebugMask(RgbaImage image) => CardMask(image);
@@ -38,8 +44,10 @@ public static class CardDetector
         var tolerance = 0.01 * Math.Max(w, h);
         bool Inside(Quad q) => q.Corners.All(p =>
             p.X >= -tolerance && p.Y >= -tolerance && p.X <= w + tolerance && p.Y <= h + tolerance);
+        // Helle Innenflächen offener Symbole können selbst wie kleine Karten aussehen; sie liegen in einer Karte.
+        bool Nested((Quad Quad, double Area) c) => candidates.Any(o => o.Area > c.Area && Contains(o.Quad, c.Quad.Center));
         return candidates
-            .Where(c => c.Area > 0.4 * median && Inside(c.Quad))
+            .Where(c => c.Area > 0.4 * median && Inside(c.Quad) && !Nested(c))
             .Select(c => c.Quad)
             .OrderBy(q => q.Center.Y)
             .ThenBy(q => q.Center.X)
@@ -69,6 +77,27 @@ public static class CardDetector
                 var quad = RefineQuad(outer, rect, erosion);
                 candidates.Add((quad, quad.Area));
                 return;
+            }
+
+            // Schräg fotografierte Karten sind Trapeze und füllen ihr Rechteck nicht aus. Dann zählt, ob die
+            // Hülle zu einem Viereck mit geraden Kanten passt (Kanten per Geradenanpassung an die Randpunkte).
+            if (solid)
+            {
+                var trapezoid = RefineQuad(outer, Geometry.LargestInscribedQuad(hull), 0);
+                var c = trapezoid.Corners;
+                double Side(int k) => (c[(k + 1) % 4] - c[k]).Length;
+                var pair1 = Side(0) + Side(2);
+                var pair2 = Side(1) + Side(3);
+                var skewAspect = Math.Max(pair1, pair2) / Math.Max(1e-9, Math.Min(pair1, pair2));
+                // Gegenüberliegende Seiten einer Karte sind auch in Schrägansicht ähnlich lang.
+                var taper = Math.Max(Ratio(Side(0), Side(2)), Ratio(Side(1), Side(3)));
+                if (hullArea / trapezoid.Area <= MaxTrapezoidFit && skewAspect is >= MinSkewAspect and <= MaxSkewAspect
+                    && taper <= MaxTaper)
+                {
+                    var quad = Expand(trapezoid, erosion);
+                    candidates.Add((quad, quad.Area));
+                    return;
+                }
             }
         }
 
@@ -256,6 +285,24 @@ public static class CardDetector
                 return expanded;
         }
         return new Quad(refined[0], refined[1], refined[2], refined[3]);
+    }
+
+    private static double Ratio(double a, double b) => Math.Max(a, b) / Math.Max(1e-9, Math.Min(a, b));
+
+    /// <summary>Liegt der Punkt im (konvexen) Viereck?</summary>
+    private static bool Contains(Quad q, Point2 p)
+    {
+        var c = q.Corners;
+        var sign = 0;
+        for (var k = 0; k < 4; k++)
+        {
+            var cross = Point2.Cross(c[(k + 1) % 4] - c[k], p - c[k]);
+            var s = Math.Sign(cross);
+            if (s == 0) continue;
+            if (sign == 0) sign = s;
+            else if (s != sign) return false;
+        }
+        return true;
     }
 
     private static Quad Expand(Quad q, double by)

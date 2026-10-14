@@ -84,6 +84,41 @@ public static class Geometry
         return best!;
     }
 
+    /// <summary>
+    /// Größtes Viereck mit Ecken auf einer konvexen Hülle (gleicher Umlaufsinn wie die Hülle). Schräg
+    /// fotografierte Karten sind Trapeze; dieses Viereck beschreibt sie besser als ein Rechteck.
+    /// Für jede Diagonale i–j wandern die besten Gegenecken k und l nur vorwärts, daher O(n²).
+    /// </summary>
+    public static Quad LargestInscribedQuad(IReadOnlyList<Point2> hull)
+    {
+        var n = hull.Count;
+        if (n < 4)
+            throw new ArgumentException("Mindestens vier Punkte nötig.", nameof(hull));
+        Point2 P(int index) => hull[index % n];
+        double Triangle(int a, int b, int c) => Math.Abs(Point2.Cross(P(b) - P(a), P(c) - P(a))) / 2;
+
+        var best = -1.0;
+        int bi = 0, bk = 1, bj = 2, bl = 3;
+        for (var i = 0; i < n; i++)
+        {
+            var k = i + 1;
+            var l = i + 3;
+            for (var j = i + 2; j <= i + n - 2; j++)
+            {
+                while (k + 1 < j && Triangle(i, k + 1, j) >= Triangle(i, k, j)) k++;
+                if (l <= j) l = j + 1;
+                while (l + 1 < i + n && Triangle(j, l + 1, i) >= Triangle(j, l, i)) l++;
+                var area = Triangle(i, k, j) + Triangle(j, l, i);
+                if (area > best)
+                {
+                    best = area;
+                    (bi, bk, bj, bl) = (i, k, j, l);
+                }
+            }
+        }
+        return new Quad(P(bi), P(bk), P(bj), P(bl));
+    }
+
     /// <summary>Gerade durch Punktwolke (Hauptkomponente). Liefert Punkt auf der Geraden und Richtung.</summary>
     public static (Point2 Origin, Point2 Direction) FitLine(IReadOnlyList<Point2> points)
     {

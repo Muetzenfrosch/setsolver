@@ -20,6 +20,7 @@ public static class CardClassifier
     // Gemessen an Kunstlicht-Fotos: Füllung leer ≤ 0,11, gestreift 0,17–0,39 (unscharf bis 0,63), voll ≥ 0,69;
     // Konvexität Welle ≤ 0,87, sonst ≥ 0,93; Flächenanteil Raute ≤ 0,54, Oval ≥ 0,75.
     private const double InkThreshold = 0.28;
+    private const double PaperMaxChroma = 0.035; // größerer Kanalunterschied: Tinte, nicht Papier oder Schatten
     private const double MinSymbolArea = 0.02;
     private const double SquiggleMaxSolidity = 0.885;
     private const double MinSolidity = 0.7, MinExtent = 0.4;
@@ -47,14 +48,25 @@ public static class CardClassifier
 
         // Tintenstärke: 0 = Papierweiß, 1 = Kanal komplett dunkel. Jede der drei Set-Farben hat einen dunklen Kanal.
         var ink = new float[w * h];
-        var inkMask = new BinaryMask(w, h);
+        var colored = new BinaryMask(w, h);
         for (var y = margin; y < h - margin; y++)
         for (var x = margin; x < w - margin; x++)
         {
             var i = y * w + x;
-            var s = 1 - Math.Min(patch.R[i] / wr, Math.Min(patch.G[i] / wg, patch.B[i] / wb));
-            ink[i] = (float)Math.Clamp(s, 0, 1);
-            inkMask.Data[i] = s > InkThreshold;
+            double tr = patch.R[i] / wr, tg = patch.G[i] / wg, tb = patch.B[i] / wb;
+            var min = Math.Min(tr, Math.Min(tg, tb));
+            ink[i] = (float)Math.Clamp(1 - min, 0, 1);
+            colored.Data[i] = Math.Max(tr, Math.Max(tg, tb)) - min > PaperMaxChroma;
+        }
+
+        // Schatten machen das Papier dunkler, aber nicht farbig: Die Tintenstärke des ungefärbten Papiers
+        // ringsum wird als Grundwert abgezogen, sonst zählen Schattenflächen als Tinte.
+        var baseline = PaperBaseline(ink, colored.Dilate(3), w, h, margin, Math.Max(4, w / 16));
+        var inkMask = new BinaryMask(w, h);
+        for (var i = 0; i < ink.Length; i++)
+        {
+            ink[i] = Math.Max(0, ink[i] - baseline[i]);
+            inkMask.Data[i] = ink[i] > InkThreshold;
         }
 
         // Umrisse schließen, Innenflächen füllen: ergibt die Silhouette jedes Symbols.
@@ -147,7 +159,7 @@ public static class CardClassifier
 
         // Anzahl: gezählte Symbole, ergänzt um die Lage der gefundenen Symbole. Ein einzelnes Symbol
         // abseits der Mitte gehört zu einer Karte mit zwei oder drei Symbolen; zwei Symbole mit einer
-        // Lücke dazwischen zu einer Karte mit dreien.
+        // Lücke dazwischen oder neben der Mitte zu einer Karte mit dreien.
         var count = symbols.Count;
         var implied = count;
         if (count == 1)
@@ -159,7 +171,9 @@ public static class CardClassifier
         {
             var gap = Math.Abs(symbols[0].Centroid.Y - symbols[1].Centroid.Y);
             var symbolHeight = symbols.Average(s => s.BoundsHeight);
-            if (gap > 2 * symbolHeight)
+            // Zwei Symbole liegen symmetrisch zur Kartenmitte; zwei benachbarte von dreien nicht.
+            var middle = Math.Abs((symbols[0].Centroid.Y + symbols[1].Centroid.Y) / 2 - h / 2.0) / h;
+            if (gap > 2 * symbolHeight || middle > TwoSymbolOffset)
                 implied = 3;
         }
         if (implied > count)
@@ -170,6 +184,83 @@ public static class CardClassifier
         var number = (Number)(count - 1);
         var features = new CardFeatures(count, hue, solidity, extent, fill, texture);
         return new ClassifiedCard(new Card(number, color, shading, shape), features, uncertain);
+    }
+
+    /// <summary>
+    /// Tintenstärke des Papiers außerhalb der Symbole (z. B. durch Schatten), blockweise als Median geschätzt.
+    /// Blöcke ohne Papier (in vollen Symbolen) werden aus den Nachbarn ergänzt, dann wird weich hochskaliert.
+    /// </summary>
+    private static float[] PaperBaseline(float[] ink, BinaryMask exclude, int w, int h, int margin, int block)
+    {
+        var bw = (w + block - 1) / block;
+        var bh = (h + block - 1) / block;
+        var values = new float[bw * bh];
+        var known = new bool[bw * bh];
+        var buffer = new List<float>(block * block);
+        for (var by = 0; by < bh; by++)
+        for (var bx = 0; bx < bw; bx++)
+        {
+            buffer.Clear();
+            for (var y = Math.Max(margin, by * block); y < Math.Min(h - margin, (by + 1) * block); y++)
+            for (var x = Math.Max(margin, bx * block); x < Math.Min(w - margin, (bx + 1) * block); x++)
+            {
+                var i = y * w + x;
+                if (!exclude.Data[i]) buffer.Add(ink[i]);
+            }
+            if (buffer.Count < block * block / 4) continue;
+            buffer.Sort();
+            values[by * bw + bx] = buffer[buffer.Count / 2];
+            known[by * bw + bx] = true;
+        }
+
+        // Lücken schrittweise mit dem Mittel der bekannten Nachbarblöcke füllen.
+        var missing = known.Count(k => !k);
+        while (missing > 0)
+        {
+            var next = (bool[])known.Clone();
+            for (var b = 0; b < values.Length; b++)
+            {
+                if (known[b]) continue;
+                int bx = b % bw, by = b / bw;
+                float sum = 0;
+                var count = 0;
+                for (var dy = -1; dy <= 1; dy++)
+                for (var dx = -1; dx <= 1; dx++)
+                {
+                    int x = bx + dx, y = by + dy;
+                    if (x < 0 || y < 0 || x >= bw || y >= bh || !known[y * bw + x]) continue;
+                    sum += values[y * bw + x];
+                    count++;
+                }
+                if (count == 0) continue;
+                values[b] = sum / count;
+                next[b] = true;
+            }
+            var stillMissing = next.Count(k => !k);
+            if (stillMissing == missing) break; // gar kein Papier gefunden: Grundwert bleibt 0
+            known = next;
+            missing = stillMissing;
+        }
+
+        var result = new float[w * h];
+        for (var y = 0; y < h; y++)
+        {
+            var fy = Math.Clamp((y + 0.5) / block - 0.5, 0, bh - 1);
+            var y0 = (int)fy;
+            var y1 = Math.Min(bh - 1, y0 + 1);
+            var ty = (float)(fy - y0);
+            for (var x = 0; x < w; x++)
+            {
+                var fx = Math.Clamp((x + 0.5) / block - 0.5, 0, bw - 1);
+                var x0 = (int)fx;
+                var x1 = Math.Min(bw - 1, x0 + 1);
+                var tx = (float)(fx - x0);
+                result[y * w + x] =
+                    (values[y0 * bw + x0] * (1 - tx) + values[y0 * bw + x1] * tx) * (1 - ty) +
+                    (values[y1 * bw + x0] * (1 - tx) + values[y1 * bw + x1] * tx) * ty;
+            }
+        }
+        return result;
     }
 
     private static float Median(float[] channel, int w, int h, int margin)
