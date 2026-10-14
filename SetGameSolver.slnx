@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SetGameSolver.Core/SetGameSolver.Core.csproj" />
+    <Project Path="src/SetGameSolver.Web/SetGameSolver.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SetGameSolver.Core.Tests/SetGameSolver.Core.Tests.csproj" />
+  </Folder>
+</Solution>
