@@ -8,20 +8,31 @@ public sealed record CardFeatures(
     double Hue,
     double Solidity,
     double Extent,
-    double FillRatio);
+    double FillRatio,
+    double Texture);
 
 public sealed record ClassifiedCard(Card Card, CardFeatures Features, bool Uncertain);
 
 /// <summary>Bestimmt Anzahl, Farbe, Füllung und Form einer entzerrten Karte.</summary>
 public static class CardClassifier
 {
-    // Schwellwerte, ermittelt an synthetischen Karten; mit echten Fotos ggf. nachjustieren.
+    // Schwellwerte, eingestellt an echten Fotos (tests/.../Photos) und synthetischen Karten.
+    // Gemessen an Kunstlicht-Fotos: Füllung leer ≤ 0,11, gestreift 0,17–0,39 (unscharf bis 0,63), voll ≥ 0,69;
+    // Konvexität Welle ≤ 0,87, sonst ≥ 0,93; Flächenanteil Raute ≤ 0,54, Oval ≥ 0,75.
     private const double InkThreshold = 0.28;
     private const double MinSymbolArea = 0.02;
-    private const double SquiggleMaxSolidity = 0.9;
-    private const double DiamondMaxExtent = 0.7;
-    private const double SolidMinFill = 0.65;
-    private const double OpenMaxFill = 0.2;
+    private const double SquiggleMaxSolidity = 0.885;
+    private const double MinSolidity = 0.7, MinExtent = 0.4;
+    private const double DiamondMaxExtent = 0.64;
+    private const double SolidMinScore = 0.45; // Füllung minus 0,8 × Streifenmuster
+    private const double OpenMaxFill = 0.14;
+    private const double GreenMinHue = 70, PurpleMinHue = 200, RedMinHue = 330;
+
+    // Lage der Symbolmitten (Abstand zur Kartenmitte relativ zur Kartenhöhe): bei zwei Symbolen ≈ 0,14,
+    // bei dreien 0 und ≈ 0,28. Damit lässt sich die Anzahl auch schätzen, wenn ein Symbol in einer
+    // Spiegelung verschwindet.
+    private const double TwoSymbolOffset = 0.07;
+    private const double ThreeSymbolOffset = 0.19;
 
     public static ClassifiedCard? Classify(CardPatch patch)
     {
@@ -77,11 +88,18 @@ public static class CardClassifier
         }
         solidity /= symbols.Count;
         extent /= symbols.Count;
-        var shape = solidity < SquiggleMaxSolidity ? Shape.Squiggle
+
+        // So zerklüftete Formen gibt es auf Set-Karten nicht: vermutlich keine Karte oder stark verdeckt.
+        if (solidity < MinSolidity || extent < MinExtent)
+            return null;
+        // Rauten füllen ihr Rechteck nur zur Hälfte; Wellen sind deutlich nicht konvex, bei Unschärfe hilft
+        // zusätzlich der geringere Flächenanteil gegenüber dem Oval.
+        var shape = extent < DiamondMaxExtent && solidity > 0.92 ? Shape.Diamond
+            : solidity < SquiggleMaxSolidity || (solidity < 0.93 && extent < 0.81) ? Shape.Squiggle
             : extent < DiamondMaxExtent ? Shape.Diamond
             : Shape.Oval;
         uncertain |= Math.Abs(solidity - SquiggleMaxSolidity) < 0.02
-            || (shape != Shape.Squiggle && Math.Abs(extent - DiamondMaxExtent) < 0.04);
+            || (shape != Shape.Squiggle && Math.Abs(extent - DiamondMaxExtent) < 0.06);
 
         // Füllung: mittlere Tintenstärke im Inneren relativ zur Stärke des Umrisses.
         var symbolMask = new BinaryMask(w, h);
@@ -91,19 +109,25 @@ public static class CardClassifier
         var interior = symbolMask.Erode(Math.Max(3, w / 40));
         var silhouetteInk = symbols.SelectMany(s => s.Pixels).Select(i => ink[i]).OrderBy(v => v).ToArray();
         var strong = silhouetteInk[(int)(0.9 * (silhouetteInk.Length - 1))];
-        double interiorSum = 0;
+        double interiorSum = 0, interiorSq = 0;
         var interiorCount = 0;
         for (var i = 0; i < interior.Data.Length; i++)
         {
             if (!interior.Data[i]) continue;
             interiorSum += ink[i];
+            interiorSq += ink[i] * ink[i];
             interiorCount++;
         }
-        var fill = interiorCount == 0 ? 0 : interiorSum / interiorCount / Math.Max(0.05, strong);
-        var shading = fill > SolidMinFill ? Shading.Solid
+        var interiorMean = interiorCount == 0 ? 0 : interiorSum / interiorCount;
+        var fill = interiorMean / Math.Max(0.05, strong);
+        // Streifen erzeugen im Inneren ein Auf und Ab der Tintenstärke, volle Flächen sind gleichmäßig.
+        var texture = interiorCount == 0 ? 0
+            : Math.Sqrt(Math.Max(0, interiorSq / interiorCount - interiorMean * interiorMean)) / Math.Max(0.05, strong);
+        var solidScore = fill - 0.8 * texture;
+        var shading = solidScore > SolidMinScore ? Shading.Solid
             : fill < OpenMaxFill ? Shading.Open
             : Shading.Striped;
-        uncertain |= Math.Abs(fill - SolidMinFill) < 0.05 || Math.Abs(fill - OpenMaxFill) < 0.04;
+        uncertain |= Math.Abs(solidScore - SolidMinScore) < 0.07 || Math.Abs(fill - OpenMaxFill) < 0.03;
 
         // Farbe: Farbton des Mittelwerts der kräftig gefärbten Pixel (nach Weißabgleich).
         double sr = 0, sg = 0, sb = 0;
@@ -116,13 +140,35 @@ public static class CardClassifier
             n++;
         }
         var hue = n == 0 ? 0 : Hue(sr / n, sg / n, sb / n);
-        var color = hue is >= 70 and < 200 ? Color.Green
-            : hue is >= 200 and < 325 ? Color.Purple
+        var color = hue is >= GreenMinHue and < PurpleMinHue ? Color.Green
+            : hue is >= PurpleMinHue and < RedMinHue ? Color.Purple
             : Color.Red;
-        uncertain |= new[] { 70.0, 200, 325 }.Any(t => Math.Abs(hue - t) < 10);
+        uncertain |= new[] { GreenMinHue, PurpleMinHue, RedMinHue }.Any(t => Math.Abs(hue - t) < 10);
 
-        var number = (Number)(symbols.Count - 1);
-        var features = new CardFeatures(symbols.Count, hue, solidity, extent, fill);
+        // Anzahl: gezählte Symbole, ergänzt um die Lage der gefundenen Symbole. Ein einzelnes Symbol
+        // abseits der Mitte gehört zu einer Karte mit zwei oder drei Symbolen; zwei Symbole mit einer
+        // Lücke dazwischen zu einer Karte mit dreien.
+        var count = symbols.Count;
+        var implied = count;
+        if (count == 1)
+        {
+            var offset = Math.Abs(symbols[0].Centroid.Y - h / 2.0) / h;
+            implied = offset > ThreeSymbolOffset ? 3 : offset > TwoSymbolOffset ? 2 : 1;
+        }
+        else if (count == 2)
+        {
+            var gap = Math.Abs(symbols[0].Centroid.Y - symbols[1].Centroid.Y);
+            var symbolHeight = symbols.Average(s => s.BoundsHeight);
+            if (gap > 2 * symbolHeight)
+                implied = 3;
+        }
+        if (implied > count)
+        {
+            uncertain = true;
+            count = implied;
+        }
+        var number = (Number)(count - 1);
+        var features = new CardFeatures(count, hue, solidity, extent, fill, texture);
         return new ClassifiedCard(new Card(number, color, shading, shape), features, uncertain);
     }
 

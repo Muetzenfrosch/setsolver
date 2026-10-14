@@ -132,8 +132,11 @@ public sealed class Component
 {
     private readonly int[] _rowMin, _rowMax, _colMin, _colMax;
 
+    private readonly int _sourceWidth;
+
     internal Component(List<int> pixels, int imageWidth)
     {
+        _sourceWidth = imageWidth;
         MinX = MinY = int.MaxValue;
         MaxX = MaxY = int.MinValue;
         foreach (var i in pixels)
@@ -157,6 +160,16 @@ public sealed class Component
             _rowMin[y] = Math.Min(_rowMin[y], x); _rowMax[y] = Math.Max(_rowMax[y], x);
             _colMin[x] = Math.Min(_colMin[x], y); _colMax[x] = Math.Max(_colMax[x], y);
         }
+    }
+
+    /// <summary>Verschiebt die Komponente aus einer Teilmaske in ein größeres Bild.</summary>
+    internal Component Translate(int dx, int dy, int targetWidth)
+    {
+        var sourceWidth = _sourceWidth;
+        var pixels = new List<int>(Pixels.Length);
+        foreach (var i in Pixels)
+            pixels.Add((i / sourceWidth + dy) * targetWidth + i % sourceWidth + dx);
+        return new Component(pixels, targetWidth);
     }
 
     /// <summary>Pixelindizes (y * Breite + x) der Komponente.</summary>

@@ -10,8 +10,13 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="StbImageSharp" Version="2.30.16" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Photos\**" CopyToOutputDirectory="PreserveNewest" LinkBase="Photos" />
   </ItemGroup>
 
   <ItemGroup>

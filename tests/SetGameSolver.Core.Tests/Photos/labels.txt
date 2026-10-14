@@ -1,0 +1,10 @@
+# Echte Fotos (Kunstlicht, 14.10.2026) mit der tatsächlichen Auslage, je drei Fotos pro Auslage.
+# Kartencode: Anzahl (1-3), Farbe (R=Rot, G=Grün, P=Lila), Füllung (s=voll, t=gestreift, o=leer),
+# Form (D=Raute, O=Oval, S=Welle). Beispiel: 2GtD = zwei grüne gestreifte Rauten.
+# Die Reihenfolge spielt keine Rolle; verglichen wird die Menge der erkannten Karten.
+
+IMG_3907 IMG_3908 IMG_3909: 1GtO 3RtO 2GoS 1PtD 1RoO 2RsS 3GoO 3RtD 1PoS 2RoD 1RsS 3RoO
+IMG_3910 IMG_3911 IMG_3912: 1GoD 2PoS 2PoD 2GoD 2GsD 1RsO 1GtD 2GsS 3GsD 3RsD 1GoS 1GtS
+IMG_3913 IMG_3914 IMG_3915: 3RsS 1GoO 2RoS 2GoO 2GtD 1RoD 1RtD 3PsS 2GsO 1PsD 1RsD 1GsO
+IMG_3916 IMG_3917 IMG_3918: 1GsO 1RsD 1PsD 2GsO 3GoS 3PsS 1RtD 1RoD 2GtD 3GoD 2GoO 2RoS 1GoO 3RsS 2RoO
+IMG_3919 IMG_3920 IMG_3921: 2RsO 1PoD 2PtS 3RtS 2PsD 3GtO 2GtO 3PoO 3PsD 3PtO 3PtS 2PsO
