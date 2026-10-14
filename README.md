@@ -66,15 +66,16 @@ regelt das Caching. Nötig sind `AllowOverride All` für das Verzeichnis sowie `
 ## Wie die Erkennung funktioniert
 
 1. Das Foto wird im Browser gedreht (EXIF) und auf höchstens 1280 Pixel Kantenlänge verkleinert.
-2. **Karten finden**: Kartenpapier ist hell und ungesättigt. Ein automatisch bestimmter Schwellwert
-   (Otsu) auf dem kleinsten Farbkanal trennt Karten vom Tisch. Zusammenhängende Flächen mit
-   Rechteckform und passendem Seitenverhältnis gelten als Karten; die Ecken werden über an die Kanten
-   angepasste Geraden bestimmt, damit auch schräg fotografierte Karten passen.
+2. **Karten finden**: Nach einem Weißabgleich auf die hellsten Bildstellen gilt als Kartenpapier, was hell,
+   kaum gesättigt und im Vergleich zur Umgebung hell genug ist (so stören Schatten und Lichtverläufe weniger);
+   starke Helligkeitskanten trennen dicht liegende Karten. Zusammenhängende Flächen mit Rechteckform und
+   passendem Seitenverhältnis gelten als Karten, zusammengewachsene Flächen werden schrittweise getrennt.
+   Die Ecken werden über an die Kanten angepasste Geraden bestimmt, damit auch schräg fotografierte Karten passen.
 3. **Entzerren**: Jede Karte wird per Homographie in ein Hochformat-Bild von 160 × 250 Pixeln umgerechnet.
 4. **Klassifizieren** (nach Weißabgleich auf das Kartenpapier):
    - *Anzahl*: Zahl der Symbol-Silhouetten.
    - *Form*: Konvexität (Wellen sind nicht konvex) und Flächenanteil im umgebenden Rechteck (Rauten ≈ 50 %, Ovale ≈ 90 %).
-   - *Füllung*: Farbanteil im Inneren der Symbole relativ zum Umriss (voll ≈ 1, gestreift ≈ 0,4, leer ≈ 0).
+   - *Füllung*: Farbanteil im Inneren der Symbole relativ zum Umriss (voll ≈ 1, gestreift ≈ 0,3, leer ≈ 0).
    - *Farbe*: Farbton der kräftig gefärbten Pixel (Grün, Lila, sonst Rot).
 5. Die Set-Suche prüft jedes Kartenpaar und schlägt die eindeutig passende dritte Karte nach.
 
@@ -83,9 +84,11 @@ oder entfernen, Karten können auch von Hand hinzugefügt werden.
 
 ### Grenzen und nächste Schritte
 
-Die Schwellwerte sind bisher nur an **synthetischen** Fotos eingestellt (siehe `Synthetic/`). Echte Fotos
-bringen Unschärfe, Spiegelungen, Schatten und abweichende Druckfarben mit. Nächster Schritt: echte Fotos
-mit bekannter Auslage als Testdaten aufnehmen und die Schwellwerte in `CardClassifier` daran nachjustieren.
+Die Schwellwerte sind an 15 echten Fotos (Kunstlicht, 189 Karten) eingestellt, die als Testdaten in
+`tests/SetGameSolver.Core.Tests/Photos` liegen; `labels.txt` beschreibt jede Auslage zeilenweise
+(z. B. `2RsO` = zwei rote volle Ovale; Farben R/G/P, Füllung s/t/o = voll/gestreift/leer, Formen D/O/S).
+Stand: 182 Karten richtig, 1 falsch (als unsicher markiert), 6 nicht gefunden – meist wegen harter Schatten
+oder Spiegelungen auf Folie. Neue Fotos (z. B. bei Tageslicht) einfach dazulegen und beschriften.
 
-Gut funktioniert die Erkennung, wenn die Karten auf einem dunklen, einfarbigen Untergrund liegen, sich nicht
-berühren und von oben ohne Blitz-Spiegelung fotografiert werden.
+Am besten funktioniert die Erkennung, wenn die Karten auf einem dunkleren, einfarbigen Untergrund liegen, sich nicht
+berühren und von oben ohne harte Schatten oder Spiegelungen fotografiert werden.

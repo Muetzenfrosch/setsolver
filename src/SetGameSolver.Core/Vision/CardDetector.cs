@@ -268,27 +268,4 @@ public static class CardDetector
         }
         return new Quad(E(q.A), E(q.B), E(q.C), E(q.D));
     }
-
-    /// <summary>Otsu-Schwellwert: maximiert die Varianz zwischen den beiden Klassen.</summary>
-    internal static int Otsu(int[] histogram)
-    {
-        long total = 0, sum = 0;
-        for (var i = 0; i < histogram.Length; i++) { total += histogram[i]; sum += (long)i * histogram[i]; }
-        long wB = 0, sumB = 0;
-        double best = -1;
-        var threshold = 0;
-        for (var t = 0; t < histogram.Length; t++)
-        {
-            wB += histogram[t];
-            if (wB == 0) continue;
-            var wF = total - wB;
-            if (wF == 0) break;
-            sumB += (long)t * histogram[t];
-            var mB = (double)sumB / wB;
-            var mF = (double)(sum - sumB) / wF;
-            var between = (double)wB * wF * (mB - mF) * (mB - mF);
-            if (between > best) { best = between; threshold = t; }
-        }
-        return threshold;
-    }
 }
