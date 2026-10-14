@@ -1,7 +1,161 @@
-﻿@page "/"
+@page "/"
+@page "/index.html"
+@using SetGameSolver.Core.Model
+@using SetGameSolver.Core.Solving
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Set-Finder</PageTitle>
+<SymbolDefs />
 
-<h1>Hello, world!</h1>
+<header class="top">
+    <img src="icon-192.png" alt="" width="36" height="36" />
+    <h1>Set-Finder</h1>
+</header>
 
-Welcome to your new app.
+<section class="actions">
+    <label class="btn primary">
+        Foto aufnehmen
+        <input type="file" accept="image/*" capture="environment" class="hidden-input"
+               @ref="_cameraInput" @onchange="() => LoadFromInputAsync(_cameraInput)" />
+    </label>
+    <label class="btn">
+        Bild wählen
+        <input type="file" accept="image/*" class="hidden-input"
+               @ref="_fileInput" @onchange="() => LoadFromInputAsync(_fileInput)" />
+    </label>
+    <button class="btn" @onclick="LoadSampleAsync">Beispiel</button>
+</section>
+
+@if (_busy)
+{
+    <div class="status busy" role="status"><span class="spinner"></span> Erkenne Karten …</div>
+}
+else if (_error is not null)
+{
+    <div class="status error" role="alert">@_error</div>
+}
+
+@if (_photo is not null)
+{
+    <div class="photo">
+        <img src="@_photo.Url" alt="Foto der Kartenauslage" />
+        <svg class="overlay" viewBox="0 0 @_photo.Width @_photo.Height" preserveAspectRatio="none">
+            @for (var i = 0; i < _slots.Count; i++)
+            {
+                var index = i;
+                var slot = _slots[i];
+                if (slot.Quad is null) continue;
+                var inSet = SelectedSet?.Positions.Contains(i) == true;
+                var c = slot.Quad.Center;
+                <g class="card-mark @(inSet ? "in-set" : "") @(slot.Uncertain && !slot.Edited ? "uncertain" : "") @(_editing == i ? "editing" : "")"
+                   @onclick="() => Edit(index)">
+                    <polygon points="@Points(slot.Quad)" />
+                    <circle cx="@F(c.X)" cy="@F(c.Y)" r="@F(LabelRadius)" />
+                    <text x="@F(c.X)" y="@F(c.Y)" font-size="@F(LabelRadius * 1.2)">@(i + 1)</text>
+                </g>
+            }
+        </svg>
+    </div>
+}
+
+@if (_result is not null)
+{
+    <section class="verdict @(_result.HasSet ? "found" : "none")">
+        @if (_slots.Count == 0)
+        {
+            <strong>Keine Karten erkannt.</strong>
+            <span>Tipp: Karten auf dunklen Untergrund legen und von oben fotografieren.</span>
+        }
+        else if (_result.HasSet)
+        {
+            <strong>@(_result.Sets.Count == 1 ? "1 Set gefunden" : $"{_result.Sets.Count} Sets gefunden")</strong>
+            <span>@_slots.Count Karten erkannt@(_elapsed is not null ? $" in {_elapsed}" : "").</span>
+        }
+        else
+        {
+            <strong>Kein Set: 3 Karten nachlegen.</strong>
+            <span>@_slots.Count Karten erkannt, keine drei davon bilden ein Set.</span>
+        }
+        @if (_result.Duplicates.Count > 0)
+        {
+            <span class="warn">Achtung: Karte doppelt erkannt (@string.Join(", ", _result.Duplicates.Select(CardText.Describe))). Bitte prüfen.</span>
+        }
+        @if (UncertainCount > 0)
+        {
+            <span class="warn">@UncertainCount @(UncertainCount == 1 ? "Karte ist" : "Karten sind") unsicher erkannt (gestrichelt). Antippen zum Korrigieren.</span>
+        }
+    </section>
+
+    @if (_result.HasSet)
+    {
+        <section class="sets">
+            @for (var s = 0; s < _result.Sets.Count; s++)
+            {
+                var setIndex = s;
+                var set = _result.Sets[s];
+                <button class="set @(setIndex == _selectedSet ? "selected" : "")" @onclick="() => _selectedSet = setIndex">
+                    <span class="set-title">Set @(s + 1): @(set.First + 1), @(set.Second + 1), @(set.Third + 1)</span>
+                    <span class="set-cards">
+                        @foreach (var p in set.Positions)
+                        {
+                            <CardView Card="_slots[p].Card" />
+                        }
+                    </span>
+                </button>
+            }
+        </section>
+    }
+}
+
+@if (_slots.Count > 0 || _photo is not null || _manual)
+{
+    <section class="cards">
+        <h2>Erkannte Karten</h2>
+        <p class="hint">Antippen, um eine falsch erkannte Karte zu korrigieren.</p>
+        <div class="card-grid">
+            @for (var i = 0; i < _slots.Count; i++)
+            {
+                var index = i;
+                var slot = _slots[i];
+                <button class="card-tile @(_editing == i ? "editing" : "")" @onclick="() => Edit(index)"
+                        title="@CardText.Describe(slot.Card)">
+                    <CardView Card="slot.Card" Highlight="SelectedSet?.Positions.Contains(i) == true"
+                              Uncertain="slot.Uncertain && !slot.Edited" />
+                    <span class="tile-number">@(i + 1)</span>
+                </button>
+            }
+            <button class="card-tile add" @onclick="AddCard" title="Karte hinzufügen">+</button>
+        </div>
+
+        @if (_editing is int e && e < _slots.Count)
+        {
+            <div class="editor">
+                <h3>Karte @(e + 1) bearbeiten</h3>
+                <AttributePicker TValue="Number" Value="_slots[e].Card.Number" Label="Anzahl"
+                                 Changed="v => Update(e, _slots[e].Card with { Number = v })" />
+                <AttributePicker TValue="Color" Value="_slots[e].Card.Color" Label="Farbe"
+                                 Changed="v => Update(e, _slots[e].Card with { Color = v })" />
+                <AttributePicker TValue="Shading" Value="_slots[e].Card.Shading" Label="Füllung"
+                                 Changed="v => Update(e, _slots[e].Card with { Shading = v })" />
+                <AttributePicker TValue="Shape" Value="_slots[e].Card.Shape" Label="Form"
+                                 Changed="v => Update(e, _slots[e].Card with { Shape = v })" />
+                <div class="editor-actions">
+                    <button class="btn danger" @onclick="() => Remove(e)">Entfernen</button>
+                    <button class="btn primary" @onclick="() => _editing = null">Fertig</button>
+                </div>
+            </div>
+        }
+    </section>
+}
+else if (!_busy)
+{
+    <section class="intro">
+        <p>Fotografiere die ausliegenden Set-Karten. Die App erkennt die Karten direkt auf deinem Gerät
+           und zeigt alle Sets, oder sagt dir, dass drei Karten nachgelegt werden müssen.</p>
+        <ul>
+            <li>Karten auf einen dunklen, einfarbigen Untergrund legen.</li>
+            <li>Möglichst senkrecht von oben fotografieren, ohne Blitz-Spiegelungen.</li>
+            <li>Die Karten sollten sich nicht berühren.</li>
+        </ul>
+        <button class="btn link" @onclick="StartManual">Karten lieber von Hand eingeben</button>
+    </section>
+}

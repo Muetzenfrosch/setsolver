@@ -1,33 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SetGameSolver.Web</title>
-    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#164e3a" />
+    <meta name="description" content="Set-Finder: Foto der Set-Karten aufnehmen und alle Sets anzeigen – läuft komplett im Browser." />
+    <title>Set-Finder</title>
+    <!-- Relative Basis: Die App funktioniert so im Wurzelverzeichnis wie in jedem Unterordner. -->
+    <base href="./" />
     <link rel="preload" id="webassembly" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="css/app.css" />
-    <!-- If you add any scoped CSS files, uncomment the following to load them
-    <link href="SetGameSolver.Web.styles.css" rel="stylesheet" /> -->
     <script type="importmap"></script>
 </head>
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="boot">
+            <img src="icon-192.png" alt="" width="96" height="96" />
+            <p>Set-Finder wird geladen …</p>
+            <div class="boot-progress"><div></div></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        Es ist ein Fehler aufgetreten.
+        <a href="." class="reload">Neu laden</a>
+        <span class="dismiss">✕</span>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>navigator.serviceWorker?.register('service-worker.js', { updateViaCache: 'none' });</script>
 </body>
 
 </html>

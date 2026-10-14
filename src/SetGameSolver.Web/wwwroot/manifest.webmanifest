@@ -1,0 +1,17 @@
+{
+  "name": "Set-Finder",
+  "short_name": "Set-Finder",
+  "description": "Findet Sets in einem Foto der Kartenauslage – komplett offline im Browser.",
+  "lang": "de",
+  "id": "./",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#164e3a",
+  "theme_color": "#164e3a",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" }
+  ]
+}

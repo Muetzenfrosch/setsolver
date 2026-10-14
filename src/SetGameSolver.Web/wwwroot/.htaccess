@@ -1,0 +1,69 @@
+# Apache-Konfiguration für den Set-Finder (wird mit veröffentlicht).
+# Benötigt: AllowOverride All (oder FileInfo Indexes) für dieses Verzeichnis,
+# sowie mod_mime, mod_rewrite und mod_headers.
+
+# WebAssembly braucht den korrekten MIME-Typ, sonst lehnen Browser die Module ab.
+AddType application/wasm .wasm
+AddType application/manifest+json .webmanifest
+AddType application/octet-stream .dat .blat
+
+# Vorkomprimierte Dateien ausliefern (.br bevorzugt, sonst .gz), falls der Browser sie annimmt.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{HTTP:Accept-Encoding} br
+    RewriteCond %{REQUEST_FILENAME}.br -f
+    RewriteRule ^(.+)$ $1.br [L]
+
+    RewriteCond %{HTTP:Accept-Encoding} gzip
+    RewriteCond %{REQUEST_FILENAME}.gz -f
+    RewriteRule ^(.+)$ $1.gz [L]
+
+    # Unbekannte Pfade auf die App umleiten (Single-Page-App).
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Typ und Kodierung der vorkomprimierten Dateien korrekt melden.
+<FilesMatch "\.br$">
+    Header set Content-Encoding br
+    Header append Vary Accept-Encoding
+    SetEnv no-gzip 1
+</FilesMatch>
+<FilesMatch "\.gz$">
+    Header set Content-Encoding gzip
+    Header append Vary Accept-Encoding
+    SetEnv no-gzip 1
+</FilesMatch>
+<FilesMatch "\.wasm\.(br|gz)$">
+    ForceType application/wasm
+</FilesMatch>
+<FilesMatch "\.js\.(br|gz)$">
+    ForceType text/javascript
+</FilesMatch>
+<FilesMatch "\.json\.(br|gz)$">
+    ForceType application/json
+</FilesMatch>
+<FilesMatch "\.html\.(br|gz)$">
+    ForceType text/html
+</FilesMatch>
+<FilesMatch "\.css\.(br|gz)$">
+    ForceType text/css
+</FilesMatch>
+<FilesMatch "\.webmanifest\.(br|gz)$">
+    ForceType application/manifest+json
+</FilesMatch>
+<FilesMatch "\.(dat|blat)\.(br|gz)$">
+    ForceType application/octet-stream
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    # Dateien in _framework tragen einen Hash im Namen und können dauerhaft gecacht werden.
+    <If "%{REQUEST_URI} =~ m#/_framework/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+    <If "%{REQUEST_URI} =~ m#(/|index\.html|service-worker\.js|service-worker-assets\.js|manifest\.webmanifest)(\.br|\.gz)?$#">
+        Header set Cache-Control "no-cache"
+    </If>
+</IfModule>

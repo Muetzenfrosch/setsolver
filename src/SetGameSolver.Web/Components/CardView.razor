@@ -1,0 +1,44 @@
+@using SetGameSolver.Core.Model
+@* Zeichnet eine Set-Karte als SVG (Hochformat). Streifenmuster kommen aus <SymbolDefs />. *@
+
+<svg class="card-view @(Highlight ? "highlight" : "") @(Uncertain ? "uncertain" : "")" viewBox="0 0 57 89"
+     role="img" aria-label="@CardText.Describe(Card)">
+    <rect x="0.75" y="0.75" width="55.5" height="87.5" rx="4" class="card-face" />
+    @for (var i = 0; i < Count; i++)
+    {
+        var cy = 44.5 + (i - (Count - 1) / 2.0) * 21;
+        <g transform="translate(28.5 @cy.ToString(System.Globalization.CultureInfo.InvariantCulture))">
+            @switch (Card.Shape)
+            {
+                case Shape.Diamond:
+                    <polygon points="-19,0 0,-8.5 19,0 0,8.5" fill="@Fill" stroke="@Ink" stroke-width="1.4" />
+                    break;
+                case Shape.Oval:
+                    <rect x="-19" y="-8.5" width="38" height="17" rx="8.5" fill="@Fill" stroke="@Ink" stroke-width="1.4" />
+                    break;
+                default:
+                    <path d="@SquigglePath" fill="@Fill" stroke="@Ink" stroke-width="1.4" />
+                    break;
+            }
+        </g>
+    }
+</svg>
+
+@code {
+    private const string SquigglePath =
+        "M -17 5 C -20 -3, -13 -9, -6 -6.5 C -1 -4.5, 3 -3.5, 8 -7 C 13 -10.5, 20 -8, 18 -1.5 " +
+        "C 16.5 5, 10 9.5, 4 6.5 C -1 4.5, -4.5 3.5, -10 7.5 C -14 10, -16 8.5, -17 5 Z";
+
+    [Parameter, EditorRequired] public Card Card { get; set; }
+    [Parameter] public bool Highlight { get; set; }
+    [Parameter] public bool Uncertain { get; set; }
+
+    private int Count => (int)Card.Number + 1;
+    private string Ink => CardText.CssColor(Card.Color);
+    private string Fill => Card.Shading switch
+    {
+        Shading.Solid => Ink,
+        Shading.Striped => $"url(#stripes-{Card.Color.ToString().ToLowerInvariant()})",
+        _ => "none",
+    };
+}

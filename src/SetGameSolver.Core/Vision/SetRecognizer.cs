@@ -26,6 +26,29 @@ public static class SetRecognizer
             var original = new Quad(quad.A * scale, quad.B * scale, quad.C * scale, quad.D * scale);
             result.Add(new DetectedCard(original, classified.Card, classified.Features, classified.Uncertain));
         }
-        return result;
+        return SortInReadingOrder(result);
+    }
+
+    /// <summary>Sortiert Karten zeilenweise von oben links nach unten rechts, damit die Nummerierung zur Auslage passt.</summary>
+    internal static List<DetectedCard> SortInReadingOrder(List<DetectedCard> cards)
+    {
+        if (cards.Count == 0)
+            return cards;
+        var heights = cards
+            .Select(c => c.Quad.Corners.Max(p => p.Y) - c.Quad.Corners.Min(p => p.Y))
+            .OrderBy(h => h)
+            .ToArray();
+        var rowTolerance = heights[heights.Length / 2] * 0.5;
+
+        var rows = new List<List<DetectedCard>>();
+        foreach (var card in cards.OrderBy(c => c.Quad.Center.Y))
+        {
+            var row = rows.LastOrDefault();
+            if (row is not null && card.Quad.Center.Y - row.Average(c => c.Quad.Center.Y) < rowTolerance)
+                row.Add(card);
+            else
+                rows.Add([card]);
+        }
+        return rows.SelectMany(r => r.OrderBy(c => c.Quad.Center.X)).ToList();
     }
 }

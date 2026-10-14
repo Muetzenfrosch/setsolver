@@ -1,0 +1,32 @@
+@typeparam TValue where TValue : struct, Enum
+@* Segmentierte Auswahl für eine Karteneigenschaft. *@
+
+<div class="picker" role="radiogroup" aria-label="@Label">
+    <span class="picker-label">@Label</span>
+    <div class="picker-options">
+        @foreach (var option in Enum.GetValues<TValue>())
+        {
+            var o = option;
+            <button class="@(IsActive(o) ? "active" : "")"
+                    role="radio" aria-checked="@IsActive(o)"
+                    @onclick="() => Changed.InvokeAsync(o)">@Text(o)</button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TValue Value { get; set; }
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public EventCallback<TValue> Changed { get; set; }
+
+    private bool IsActive(TValue v) => EqualityComparer<TValue>.Default.Equals(v, Value);
+
+    private static string Text(TValue v) => v switch
+    {
+        SetGameSolver.Core.Model.Number n => CardText.Name(n),
+        SetGameSolver.Core.Model.Color c => CardText.Name(c),
+        SetGameSolver.Core.Model.Shading s => CardText.Name(s),
+        SetGameSolver.Core.Model.Shape s => CardText.Name(s),
+        _ => v.ToString(),
+    };
+}
