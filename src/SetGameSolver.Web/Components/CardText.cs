@@ -12,9 +12,9 @@ public static class CardText
 
     public static string CssColor(Color c) => c switch
     {
-        Color.Red => "#e01c2c",
-        Color.Green => "#0b9646",
-        _ => "#662891",
+        Color.Red => "#e6462d",
+        Color.Green => "#11924a",
+        _ => "#54289b",
     };
 
     public static string Describe(Card c) =>

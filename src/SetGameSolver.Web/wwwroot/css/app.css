@@ -10,7 +10,7 @@
     --none: #b4540a;
     --warn: #9a5b00;
     --danger: #b3261e;
-    --set: #ffb300;
+    --set: #22c55e;
     --card-face: #fbfaf6;
     color-scheme: light dark;
 }
@@ -96,7 +96,7 @@ html, body {
 .card-mark circle { fill: rgba(0, 0, 0, 0.6); }
 .card-mark text { fill: #fff; text-anchor: middle; dominant-baseline: central; font-weight: 700; font-family: system-ui, sans-serif; }
 .card-mark.uncertain polygon { stroke: #ff9800; stroke-dasharray: 8 6; }
-.card-mark.in-set polygon { stroke: var(--set); stroke-width: 4px; fill: rgba(255, 179, 0, 0.18); }
+.card-mark.in-set polygon { stroke: var(--set); stroke-width: 4px; fill: rgba(34, 197, 94, 0.3); }
 .card-mark.in-set circle { fill: var(--set); }
 .card-mark.in-set text { fill: #000; }
 .card-mark.editing polygon { stroke: #4fc3f7; stroke-width: 4px; }
