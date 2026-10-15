@@ -1,0 +1,99 @@
+name: Docker Hub
+
+# Veröffentlicht das Docker-Image auf Docker Hub als <Benutzer>/set-finder:<Version> und :latest,
+# für amd64, arm64 und arm/v7 (z. B. Raspberry Pi).
+# - Bei jeder neuen Version: Der Workflow "Releases" startet diesen Workflow selbst; ein auf GitHub von Hand
+#   veröffentlichtes Release startet ihn ebenfalls. Von Hand geht es mit "Run workflow" (Version optional).
+# - Jeden Montag: baut die neueste Version neu, damit das Image die neueste stabile Nginx-Version enthält.
+# Voraussetzung (Settings > Secrets and variables > Actions): Variable DOCKERHUB_USERNAME und Secret
+# DOCKERHUB_TOKEN (Zugangstoken von Docker Hub mit "Read & Write"). Fehlt eines davon, wird nur gebaut.
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, z. B. 1.1 (leer lassen für die neueste)"
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-hub
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Version und Ziel bestimmen
+        id: ziel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          EINGABE: ${{ inputs.version }}
+          BENUTZER: ${{ vars.DOCKERHUB_USERNAME }}
+          TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          neueste=$(gh release view --json tagName --jq .tagName)
+          if [ -n "$RELEASE_TAG" ]; then tag=$RELEASE_TAG
+          elif [ -n "$EINGABE" ]; then tag="v${EINGABE#v}"
+          else tag=$neueste; fi
+          version=${tag#v}
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then echo "::error::Unbekannte Version: $tag"; exit 1; fi
+
+          if [ -n "$BENUTZER" ] && [ -n "$TOKEN" ]; then
+            push=true; image="$BENUTZER/set-finder"
+          else
+            push=false; image="set-finder"
+            echo "::notice::Docker Hub ist nicht eingerichtet (Variable DOCKERHUB_USERNAME, Secret DOCKERHUB_TOKEN); das Image wird nur gebaut."
+          fi
+          tags="$image:$version"
+          [ "$tag" = "$neueste" ] && tags="$tags,$image:latest"
+          { echo "tag=$tag"; echo "version=$version"; echo "push=$push"; echo "tags=$tags"; } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ziel.outputs.tag }}
+
+      - name: Dockerfile vorhanden?
+        id: quelle
+        run: |
+          test -f Dockerfile || { echo "::error::${{ steps.ziel.outputs.tag }} hat noch kein Dockerfile (erst ab Version 1.1)."; exit 1; }
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        if: steps.ziel.outputs.push == 'true'
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Die letzte Stufe kopiert nur Dateien, daher braucht es für arm64 und arm/v7 keine Emulation.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          pull: true
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: ${{ steps.ziel.outputs.push == 'true' }}
+          tags: ${{ steps.ziel.outputs.tags }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.ziel.outputs.version }}
+            org.opencontainers.image.revision=${{ steps.quelle.outputs.revision }}
+          provenance: false
+
+      - name: Zusammenfassung
+        env:
+          TAGS: ${{ steps.ziel.outputs.tags }}
+          PUSH: ${{ steps.ziel.outputs.push }}
+        run: |
+          {
+            if [ "$PUSH" = true ]; then echo "Auf Docker Hub veröffentlicht: \`${TAGS//,/\`, \`}\`"
+            else echo "Nur gebaut (Docker Hub nicht eingerichtet): \`${TAGS//,/\`, \`}\`"; fi
+          } >> "$GITHUB_STEP_SUMMARY"

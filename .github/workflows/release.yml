@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # um danach den Workflow "Docker Hub" zu starten
 
 jobs:
   neues-release:
@@ -75,6 +76,14 @@ jobs:
             gh release create "v$VERSION" "$zip" --target "$GITHUB_SHA" --title "Version $VERSION" \
               --notes-file notes.md --latest
           fi
+
+      # Ein mit dem GITHUB_TOKEN angelegtes Release löst selbst keine Workflows aus, deshalb direkt starten.
+      - name: Docker-Image veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: gh workflow run docker.yml --ref main -f version="$VERSION"
 
   bisherige-versionen:
     if: github.event_name == 'workflow_dispatch' && inputs.version == '0.5-1.0'

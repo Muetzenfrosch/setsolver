@@ -8,6 +8,7 @@ Vorlage unter `deploy/nginx`.
 ## 1.2 (noch nicht veröffentlicht)
 
 - Die App läuft auch auf GitHub Pages unter https://muetzenfrosch.github.io/setsolver/ und wird bei jedem Push auf main aktualisiert.
+- Das Docker-Image wird auf Docker Hub veröffentlicht, für amd64, arm64 und arm/v7: bei jeder neuen Version und jeden Montag neu gebaut mit der neuesten stabilen Nginx-Version.
 
 ## 1.1 (15.10.2026)
 
