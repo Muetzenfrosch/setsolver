@@ -10,6 +10,11 @@ sie, dass drei Karten nachgelegt werden müssen.
 - **Nur statische Dateien**: Jeder Webserver (Nginx, Apache, …) genügt.
 - **Offline-fähig (PWA)**: Nach dem ersten Besuch auch ohne Netz nutzbar und zum Startbildschirm hinzufügbar.
 
+<p align="center">
+  <img src="docs/screenshot-beispiel.png" width="320"
+       alt="Set-Finder auf dem Handy: Beispielauslage mit 12 Karten, zwei gefundene Sets und die erkannten Karten im Raster">
+</p>
+
 ## Bedienung
 
 - **Foto aufnehmen** öffnet die Kamera, **Bild wählen** nimmt ein vorhandenes Foto oder einen Screenshot.
@@ -50,6 +55,7 @@ nachgelegt. Siehe [Wikipedia](https://de.wikipedia.org/wiki/Set_(Spiel)) und
 | `src/SetGameSolver.Web` | Blazor-WebAssembly-Oberfläche |
 | `tests/SetGameSolver.Core.Tests` | xUnit-Tests für Regeln und Erkennung |
 | `deploy/nginx` | Beispielkonfiguration für Nginx (Apache: `.htaccess` wird mit veröffentlicht) |
+| `docs` | Screenshot für dieses README |
 
 ## Entwickeln
 
