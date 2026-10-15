@@ -1,13 +1,32 @@
 # Set-Finder
 
-Eine Web-App fürs Handy: Foto der ausliegenden **Set**-Karten aufnehmen, die App erkennt die Karten
-und zeigt alle Sets an, oder meldet, dass drei Karten nachgelegt werden müssen.
+Eine Web-App fürs Handy, die beim Kartenspiel **SET** hilft: Man fotografiert die ausliegenden Karten mit der
+Handykamera, die App erkennt die Karten und zeigt, ob und welche Sets darin liegen. Gibt es kein Set, meldet
+sie, dass drei Karten nachgelegt werden müssen.
 
 - **.NET 10 (LTS), Blazor WebAssembly**: läuft vollständig im Browser.
 - **Keine Server-Logik, kein KI-Dienst**: Die Bilderkennung ist klassische Bildverarbeitung in C#.
   Das Foto verlässt das Gerät nie.
 - **Nur statische Dateien**: Jeder Webserver (Nginx, Apache, …) genügt.
 - **Offline-fähig (PWA)**: Nach dem ersten Besuch auch ohne Netz nutzbar und zum Startbildschirm hinzufügbar.
+
+## Bedienung
+
+- **Foto aufnehmen** öffnet die Kamera, **Bild wählen** nimmt ein vorhandenes Foto oder einen Screenshot.
+- Die App nummeriert die erkannten Karten im Foto und listet alle Sets auf; das gewählte Set wird im Foto
+  grün markiert. Gibt es kein Set, erscheint „Kein Set: 3 Karten nachlegen“.
+- Unter **Erkannte Karten** liegen die Karten im selben Raster wie auf dem Foto (z. B. 3 × 4, 4 × 3, 5 × 3).
+  Wurde eine Karte nicht erkannt, bleibt ihr Platz mit „?“ frei. Unsichere Karten sind gestrichelt markiert.
+  Jede Karte lässt sich antippen und korrigieren, ein freier Platz antippen und ausfüllen.
+- **Karten lieber von Hand eingeben** funktioniert ganz ohne Foto.
+- **Beispiel** erzeugt bei jedem Tippen eine neue Auslage aus 12 zufälligen Karten zum Ausprobieren.
+
+## Installation auf dem eigenen Webserver
+
+Unter [Releases](https://github.com/Muetzenfrosch/setsolver/releases) liegt für jede Version die fertige App
+als `set-finder-webserver-<Version>.zip`. Den Inhalt des Zips in das Wurzelverzeichnis der Domain oder in einen
+beliebigen Unterordner kopieren, fertig. (Nur bei Version 0.5 liegen die Dateien im Zip noch im Ordner
+`wwwroot`.) Hinweise zu Apache und Nginx stehen unten unter [Veröffentlichen](#veröffentlichen).
 
 ## Spielregel in einem Satz
 
@@ -108,3 +127,45 @@ dazulegen und beschriften.
 
 Am besten funktioniert die Erkennung, wenn sich die Karten nicht berühren und von oben ohne harte Schatten oder
 Spiegelungen fotografiert werden. Der Untergrund darf gemustert sein, sollte aber nicht so hell glänzen wie die Karten.
+
+## Entstehung
+
+Der Code ist vollständig mit [Claude Code](https://claude.com/claude-code), dem KI-Assistenten von Anthropic,
+nach meinen Vorgaben entstanden. Jede Commit-Nachricht enthält den Prompt, der zu der jeweiligen Änderung geführt
+hat; der erste Commit zusätzlich die ursprüngliche Projektbeschreibung. Die App selbst nutzt keine KI.
+
+## Lizenz
+
+Der Quellcode steht unter der [MIT-Lizenz](LICENSE). Sie gilt nicht für das Spiel SET, seinen Namen und die
+Gestaltung seiner Karten und Symbole, und auch nicht für die Fotos und Screenshots in
+`tests/SetGameSolver.Core.Tests/Photos`; siehe den folgenden Hinweis.
+
+## Rechtlicher Hinweis
+
+SET ist ein Kartenspiel von Marsha Falco. Alle Rechte am Spiel, an seinem Namen, an der Gestaltung der Karten
+und Symbole sowie an allen weiteren damit verbundenen Inhalten liegen ausschließlich bei den jeweiligen
+Rechteinhabern. Das gilt ebenso für die Set-Apps, aus denen die Screenshots `IMG_3952` bis `IMG_3960` in
+`tests/SetGameSolver.Core.Tests/Photos` stammen; sie liegen dort nur als Testdaten für die Bilderkennung.
+
+Dieses Repository ist ein privates, nicht kommerzielles Projekt. Es steht in keiner Verbindung zu den
+Rechteinhabern und wird von ihnen weder unterstützt noch geprüft. Die Kartensymbole in der App sind eigene
+Nachzeichnungen und dienen nur dazu, die erkannten Karten darzustellen.
+
+Ich möchte mit diesem Projekt keinerlei Rechte verletzen. Wenn Sie Rechte an etwas in diesem Repository haben
+oder Sie hier etwas stört, wenden Sie sich bitte an mich, am einfachsten über ein
+[Issue](https://github.com/Muetzenfrosch/setsolver/issues). Ich kümmere mich umgehend darum und entferne oder
+ändere die betreffenden Inhalte, wenn nötig.
+
+### Legal notice
+
+SET is a card game invented by Marsha Falco. All rights to the game, its name, the design of its cards and
+symbols and all related content belong exclusively to their respective owners. The same applies to the SET apps
+from which the screenshots `IMG_3952` to `IMG_3960` in `tests/SetGameSolver.Core.Tests/Photos` were taken; they
+are included solely as test data for the image recognition.
+
+This repository is a private, non-commercial project. It is not affiliated with, endorsed or reviewed by any of
+the rights holders. The card symbols in the app are my own redrawings, used only to display the recognized cards.
+
+I do not intend to infringe any rights. If you hold rights to anything in this repository, or if anything here
+bothers you, please contact me, preferably by opening an [issue](https://github.com/Muetzenfrosch/setsolver/issues).
+I will take care of it promptly and remove or change the content in question if necessary.
