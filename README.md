@@ -26,7 +26,11 @@ sie, dass drei Karten nachgelegt werden müssen.
 Unter [Releases](https://github.com/Muetzenfrosch/setsolver/releases) liegt für jede Version die fertige App
 als `set-finder-webserver-<Version>.zip`. Den Inhalt des Zips in das Wurzelverzeichnis der Domain oder in einen
 beliebigen Unterordner kopieren, fertig. (Nur bei Version 0.5 liegen die Dateien im Zip noch im Ordner
-`wwwroot`.) Hinweise zu Apache und Nginx stehen unten unter [Veröffentlichen](#veröffentlichen).
+`wwwroot`.) Hinweise zu Apache und Nginx stehen unten unter [Veröffentlichen](#veröffentlichen), was sich in
+jeder Version geändert hat, in [CHANGELOG.md](CHANGELOG.md).
+
+Für eine neue Version genügt es, auf GitHub ein Release mit einem Tag wie `v1.1` zu veröffentlichen: Der Workflow
+`.github/workflows/release.yml` baut dann die App und hängt das Zip an.
 
 ## Spielregel in einem Satz
 

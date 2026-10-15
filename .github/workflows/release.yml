@@ -1,0 +1,87 @@
+name: Releases
+
+# Baut die App und hängt sie als set-finder-webserver-<Version>.zip an ein Release.
+# - Neues Release: Auf GitHub ein Release mit Tag vX.Y veröffentlichen; das Zip wird dann automatisch angehängt.
+# - Von Hand ("Run workflow"): legt die Releases der bisherigen Versionen 0.5 bis 1.0 an, mit dem Text aus CHANGELOG.md.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  neues-release:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Veröffentlichen
+        run: dotnet publish src/SetGameSolver.Web --configuration Release --output publish
+
+      - name: Zip an das Release hängen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          zip="$PWD/set-finder-webserver-${TAG#v}.zip"
+          (cd publish/wwwroot && zip -qr -X "$zip" .)
+          gh release upload "$TAG" "$zip" --clobber
+
+  bisherige-versionen:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1 # der Reihe nach, damit 1.0 das neueste Release ist
+      matrix:
+        include:
+          - version: "0.5"
+            commit: dee3f05b402e7785e477358b07ec4af1b4e31eb7
+          - version: "0.6"
+            commit: 18a9ddb945e1b816c3d4563342ac91094de7d430
+          - version: "0.7"
+            commit: b5a68ed7b107e5bdaaf40b2d0c9a6addf72eede1
+          - version: "0.8"
+            commit: 40caf8603a7225f8850b531cf3ed6c46e4d817b8
+          - version: "0.9"
+            commit: 33f2f683eb34847e75e5a26559dd4a9cddfe892b
+          - version: "1.0"
+            commit: 84abbd25eee5ffe4e8ebacac6a60b5def07c84dc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.commit }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Veröffentlichen
+        run: dotnet publish src/SetGameSolver.Web --configuration Release --output publish
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ matrix.version }}
+          COMMIT: ${{ matrix.commit }}
+        run: |
+          zip="$PWD/set-finder-webserver-$VERSION.zip"
+          # So wie damals ausgeliefert: Version 0.5 enthielt den Ordner wwwroot, spätere nur dessen Inhalt.
+          if [ "$VERSION" = "0.5" ]; then (cd publish && zip -qr -X "$zip" wwwroot)
+          else (cd publish/wwwroot && zip -qr -X "$zip" .); fi
+          gh api "repos/$GITHUB_REPOSITORY/contents/CHANGELOG.md?ref=main" -H "Accept: application/vnd.github.raw" \
+            | awk -v v="$VERSION" '/^## /{p=($2==v); next} p' > notes.md
+          latest=false; [ "$VERSION" = "1.0" ] && latest=true
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            gh release upload "v$VERSION" "$zip" --clobber
+          else
+            gh release create "v$VERSION" "$zip" --target "$COMMIT" --title "Version $VERSION" \
+              --notes-file notes.md --latest=$latest
+          fi
