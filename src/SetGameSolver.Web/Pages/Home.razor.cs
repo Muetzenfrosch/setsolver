@@ -6,6 +6,7 @@ using SetGameSolver.Core.Model;
 using SetGameSolver.Core.Solving;
 using SetGameSolver.Core.Synthetic;
 using SetGameSolver.Core.Vision;
+using SetGameSolver.Web.Localization;
 
 namespace SetGameSolver.Web.Pages;
 
@@ -27,6 +28,7 @@ public partial class Home : IAsyncDisposable
     }
 
     [Inject] private IJSRuntime JS { get; set; } = default!;
+    [CascadingParameter] public Texts T { get; set; } = Texts.English;
 
     private IJSObjectReference? _module;
     private ElementReference _cameraInput;
@@ -40,8 +42,8 @@ public partial class Home : IAsyncDisposable
     private int? _editing;
     private bool _busy;
     private bool _manual;
-    private string? _error;
-    private string? _elapsed;
+    private string? _error; // Grund, warum das Bild nicht ausgewertet werden konnte
+    private double? _elapsed; // Rechenzeit der Erkennung in Sekunden
 
     private FoundSet? SelectedSet =>
         _result is { HasSet: true } r && _selectedSet < r.Sets.Count ? r.Sets[_selectedSet] : null;
@@ -102,13 +104,12 @@ public partial class Home : IAsyncDisposable
             if (detected.Count > 0)
                 _grid = CardLayout.Arrange(detected.Select(d => d.Quad).ToList());
             _slots.AddRange(detected.Select((d, i) => new Slot(d.Card, d.Quad, d.Uncertain, _grid?.Cells[i])));
-            // Invariante Globalisierung (kleinerer Download): Dezimalkomma von Hand setzen.
-            _elapsed = watch.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') + " s";
+            _elapsed = watch.Elapsed.TotalSeconds;
             Solve();
         }
         catch (Exception ex)
         {
-            _error = $"Das Bild konnte nicht ausgewertet werden: {ex.Message}";
+            _error = ex.Message;
         }
         finally
         {

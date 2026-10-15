@@ -1,9 +1,16 @@
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject LanguageState Language
 
-<main class="page">
-    @Body
-</main>
-<footer class="foot">
-    Läuft komplett offline im Browser. Spielregeln: drei Karten bilden ein Set, wenn jede Eigenschaft
-    bei allen dreien gleich oder bei allen dreien verschieden ist.
-</footer>
+<CascadingValue Value="Language.Texts">
+    <main class="page">
+        @Body
+    </main>
+    <footer class="foot">@Language.Texts.Footer</footer>
+</CascadingValue>
+
+@code {
+    protected override void OnInitialized() => Language.Changed += StateHasChanged;
+
+    public void Dispose() => Language.Changed -= StateHasChanged;
+}

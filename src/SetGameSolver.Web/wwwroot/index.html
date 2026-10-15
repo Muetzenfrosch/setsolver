@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#164e3a" />
-    <meta name="description" content="Set-Finder: Foto der Set-Karten aufnehmen und alle Sets anzeigen – läuft komplett im Browser." />
+    <meta name="description" content="Set-Finder: take a photo of SET cards and see all sets – runs entirely in the browser." />
     <title>Set-Finder</title>
     <!-- Relative Basis: Die App funktioniert so im Wurzelverzeichnis wie in jedem Unterordner. -->
     <base href="./" />
@@ -21,16 +21,36 @@
     <div id="app">
         <div class="boot">
             <img src="icon-192.png" alt="" width="96" height="96" />
-            <p>Set-Finder wird geladen …</p>
+            <p data-de="Set-Finder wird geladen …">Loading Set-Finder …</p>
             <div class="boot-progress"><div></div></div>
         </div>
     </div>
 
     <div id="blazor-error-ui">
-        Es ist ein Fehler aufgetreten.
-        <a href="." class="reload">Neu laden</a>
+        <span data-de="Es ist ein Fehler aufgetreten.">An error has occurred.</span>
+        <a href="." class="reload" data-de="Neu laden">Reload</a>
         <span class="dismiss">✕</span>
     </div>
+    <script>
+        // Sprache der Oberfläche: zuletzt gewählt, sonst Deutsch bei deutsch eingestelltem Browser, sonst Englisch.
+        window.setFinderLanguage = {
+            key: 'set-finder.language',
+            get() {
+                let stored = null;
+                try { stored = localStorage.getItem(this.key); } catch { }
+                const browser = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+                const lang = stored === 'de' || stored === 'en' ? stored : browser.startsWith('de') ? 'de' : 'en';
+                document.documentElement.lang = lang;
+                return lang;
+            },
+            set(lang) {
+                try { localStorage.setItem(this.key, lang); } catch { }
+                document.documentElement.lang = lang;
+            }
+        };
+        if (setFinderLanguage.get() === 'de')
+            document.querySelectorAll('[data-de]').forEach(e => e.textContent = e.dataset.de);
+    </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script>navigator.serviceWorker?.register('service-worker.js', { updateViaCache: 'none' });</script>
 </body>

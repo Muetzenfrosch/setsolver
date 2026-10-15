@@ -1,0 +1,43 @@
+@* Umschalter Deutsch/Englisch rechts oben, mit kleinen Flaggen. *@
+@inject LanguageState Language
+
+<div class="lang-switch" role="group" aria-label="@T.Language">
+    <button class="@(T == Texts.German ? "active" : "")" aria-pressed="@(T == Texts.German)" lang="de" title="Deutsch"
+            @onclick="() => Language.SetAsync(Texts.German)">
+        <svg class="flag" viewBox="0 0 5 3" aria-hidden="true">
+            <rect width="5" height="1" fill="#000" />
+            <rect y="1" width="5" height="1" fill="#dd0000" />
+            <rect y="2" width="5" height="1" fill="#ffce00" />
+        </svg>
+        DE
+    </button>
+    <button class="@(T == Texts.English ? "active" : "")" aria-pressed="@(T == Texts.English)" lang="en" title="English"
+            @onclick="() => Language.SetAsync(Texts.English)">
+        <svg class="flag" viewBox="0 0 190 100" aria-hidden="true">
+            <rect width="190" height="100" fill="#fff" />
+            @for (var i = 0; i < 7; i++)
+            {
+                <rect y="@F(2 * i * Stripe)" width="190" height="@F(Stripe)" fill="#b22234" />
+            }
+            <rect width="76" height="@F(7 * Stripe)" fill="#3c3b6e" />
+            @foreach (var (x, y) in Stars)
+            {
+                <circle cx="@F(x)" cy="@F(y)" r="1.7" fill="#fff" />
+            }
+        </svg>
+        EN
+    </button>
+</div>
+
+@code {
+    [CascadingParameter] public Texts T { get; set; } = Texts.English;
+
+    private const double Stripe = 100.0 / 13;
+
+    // 50 Sterne in 9 Reihen, abwechselnd 6 und 5.
+    private static readonly (double X, double Y)[] Stars =
+        Enumerable.Range(0, 9).SelectMany(row => Enumerable.Range(0, row % 2 == 0 ? 6 : 5)
+            .Select(k => ((2 * k + 1 + row % 2) * 76 / 12.0, (row + 1) * 7 * Stripe / 10))).ToArray();
+
+    private static string F(double v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}

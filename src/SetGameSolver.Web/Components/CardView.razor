@@ -3,7 +3,7 @@
 @* Zeichnet eine Set-Karte als SVG (Hochformat, quer gedreht mit Landscape). Streifenmuster kommen aus <SymbolDefs />. *@
 
 <svg class="card-view @(Highlight ? "highlight" : "") @(Uncertain ? "uncertain" : "")"
-     viewBox="@(Landscape ? "0 0 89 57" : "0 0 57 89")" role="img" aria-label="@CardText.Describe(Card)">
+     viewBox="@(Landscape ? "0 0 89 57" : "0 0 57 89")" role="img" aria-label="@T.Describe(Card)">
     <g transform="@(Landscape ? "translate(0 57) rotate(-90)" : null)">
     <rect x="0.75" y="0.75" width="55.5" height="87.5" rx="4" class="card-face" />
     @for (var i = 0; i < Count; i++)
@@ -36,6 +36,7 @@
     [Parameter] public bool Uncertain { get; set; }
     /// <summary>Karte quer zeigen, wie sie auf dem Foto liegt.</summary>
     [Parameter] public bool Landscape { get; set; }
+    [CascadingParameter] public Texts T { get; set; } = Texts.English;
 
     private int Count => (int)Card.Number + 1;
     private string Ink => CardText.CssColor(Card.Color);

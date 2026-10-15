@@ -1,8 +1,8 @@
 {
   "name": "Set-Finder",
   "short_name": "Set-Finder",
-  "description": "Findet Sets in einem Foto der Kartenauslage – komplett offline im Browser.",
-  "lang": "de",
+  "description": "Finds sets in a photo of the cards on the table – completely offline in the browser.",
+  "lang": "en",
   "id": "./",
   "start_url": "./",
   "display": "standalone",

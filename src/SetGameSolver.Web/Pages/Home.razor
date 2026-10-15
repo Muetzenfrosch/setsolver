@@ -10,35 +10,36 @@
 <header class="top">
     <img src="icon-192.png" alt="" width="36" height="36" />
     <h1>Set-Finder</h1>
+    <LanguageSwitch />
 </header>
 
 <section class="actions">
     <label class="btn primary">
-        Foto aufnehmen
+        @T.TakePhoto
         <input type="file" accept="image/*" capture="environment" class="hidden-input"
                @ref="_cameraInput" @onchange="() => LoadFromInputAsync(_cameraInput)" />
     </label>
     <label class="btn">
-        Bild wählen
+        @T.ChooseImage
         <input type="file" accept="image/*" class="hidden-input"
                @ref="_fileInput" @onchange="() => LoadFromInputAsync(_fileInput)" />
     </label>
-    <button class="btn" @onclick="LoadSampleAsync">Beispiel</button>
+    <button class="btn" @onclick="LoadSampleAsync">@T.Example</button>
 </section>
 
 @if (_busy)
 {
-    <div class="status busy" role="status"><span class="spinner"></span> Erkenne Karten …</div>
+    <div class="status busy" role="status"><span class="spinner"></span> @T.Recognizing</div>
 }
 else if (_error is not null)
 {
-    <div class="status error" role="alert">@_error</div>
+    <div class="status error" role="alert">@T.ImageFailed(_error)</div>
 }
 
 @if (_photo is not null)
 {
     <div class="photo">
-        <img src="@_photo.Url" alt="Foto der Kartenauslage" />
+        <img src="@_photo.Url" alt="@T.PhotoAlt" />
         <svg class="overlay" viewBox="0 0 @_photo.Width @_photo.Height" preserveAspectRatio="none">
             @for (var i = 0; i < _slots.Count; i++)
             {
@@ -63,26 +64,26 @@ else if (_error is not null)
     <section class="verdict @(_result.HasSet ? "found" : "none")">
         @if (_slots.Count == 0)
         {
-            <strong>Keine Karten erkannt.</strong>
-            <span>Tipp: Karten auf dunklen Untergrund legen und von oben fotografieren.</span>
+            <strong>@T.NoCards</strong>
+            <span>@T.NoCardsTip</span>
         }
         else if (_result.HasSet)
         {
-            <strong>@(_result.Sets.Count == 1 ? "1 Set gefunden" : $"{_result.Sets.Count} Sets gefunden")</strong>
-            <span>@_slots.Count Karten erkannt@(_elapsed is not null ? $" in {_elapsed}" : "").</span>
+            <strong>@T.SetsFound(_result.Sets.Count)</strong>
+            <span>@T.CardsRecognized(_slots.Count, _elapsed)</span>
         }
         else
         {
-            <strong>Kein Set: 3 Karten nachlegen.</strong>
-            <span>@_slots.Count Karten erkannt, keine drei davon bilden ein Set.</span>
+            <strong>@T.NoSet</strong>
+            <span>@T.NoSetDetail(_slots.Count)</span>
         }
         @if (_result.Duplicates.Count > 0)
         {
-            <span class="warn">Achtung: Karte doppelt erkannt (@string.Join(", ", _result.Duplicates.Select(CardText.Describe))). Bitte prüfen.</span>
+            <span class="warn">@T.Duplicates(string.Join(", ", _result.Duplicates.Select(T.Describe)))</span>
         }
         @if (UncertainCount > 0)
         {
-            <span class="warn">@UncertainCount @(UncertainCount == 1 ? "Karte ist" : "Karten sind") unsicher erkannt (gestrichelt). Antippen zum Korrigieren.</span>
+            <span class="warn">@T.Uncertain(UncertainCount)</span>
         }
     </section>
 
@@ -110,8 +111,8 @@ else if (_error is not null)
 @if (_slots.Count > 0 || _photo is not null || _manual)
 {
     <section class="cards">
-        <h2>Erkannte Karten</h2>
-        <p class="hint">Antippen, um eine falsch erkannte Karte zu korrigieren.@(HasFreeCells ? " Ein freier Platz (?) bedeutet: Dort liegt eine Karte, die nicht erkannt wurde. Antippen, um sie einzutragen." : "")</p>
+        <h2>@T.RecognizedCards</h2>
+        <p class="hint">@T.TapToCorrect@(HasFreeCells ? T.FreeCellHint : "")</p>
         @if (_grid is not null)
         {
             @* Raster wie auf dem Foto: gleiche Zeilen und Spalten, freie Plätze für nicht erkannte Karten. *@
@@ -129,7 +130,7 @@ else if (_error is not null)
                         }
                         else if (r < _grid.Rows && c < _grid.Columns)
                         {
-                            <button class="card-tile free" @onclick="() => AddCard(cell)" title="Hier fehlt eine Karte">?</button>
+                            <button class="card-tile free" @onclick="() => AddCard(cell)" title="@T.CardMissingHere">?</button>
                         }
                         else
                         {
@@ -138,7 +139,7 @@ else if (_error is not null)
                         }
                     }
                 }
-                <button class="card-tile add" @onclick="() => AddCard()" title="Karte hinzufügen">+</button>
+                <button class="card-tile add" @onclick="() => AddCard()" title="@T.AddCard">+</button>
             </div>
         }
         else
@@ -148,25 +149,25 @@ else if (_error is not null)
                 {
                     @CardTile(i)
                 }
-                <button class="card-tile add" @onclick="() => AddCard()" title="Karte hinzufügen">+</button>
+                <button class="card-tile add" @onclick="() => AddCard()" title="@T.AddCard">+</button>
             </div>
         }
 
         @if (_editing is int e && e < _slots.Count)
         {
             <div class="editor">
-                <h3>Karte @(e + 1) bearbeiten</h3>
-                <AttributePicker TValue="Number" Value="_slots[e].Card.Number" Label="Anzahl"
+                <h3>@T.EditCard(e + 1)</h3>
+                <AttributePicker TValue="Number" Value="_slots[e].Card.Number" Label="@T.NumberLabel"
                                  Changed="v => Update(e, _slots[e].Card with { Number = v })" />
-                <AttributePicker TValue="Color" Value="_slots[e].Card.Color" Label="Farbe"
+                <AttributePicker TValue="Color" Value="_slots[e].Card.Color" Label="@T.ColorLabel"
                                  Changed="v => Update(e, _slots[e].Card with { Color = v })" />
-                <AttributePicker TValue="Shading" Value="_slots[e].Card.Shading" Label="Füllung"
+                <AttributePicker TValue="Shading" Value="_slots[e].Card.Shading" Label="@T.ShadingLabel"
                                  Changed="v => Update(e, _slots[e].Card with { Shading = v })" />
-                <AttributePicker TValue="Shape" Value="_slots[e].Card.Shape" Label="Form"
+                <AttributePicker TValue="Shape" Value="_slots[e].Card.Shape" Label="@T.ShapeLabel"
                                  Changed="v => Update(e, _slots[e].Card with { Shape = v })" />
                 <div class="editor-actions">
-                    <button class="btn danger" @onclick="() => Remove(e)">Entfernen</button>
-                    <button class="btn primary" @onclick="() => _editing = null">Fertig</button>
+                    <button class="btn danger" @onclick="() => Remove(e)">@T.Remove</button>
+                    <button class="btn primary" @onclick="() => _editing = null">@T.Done</button>
                 </div>
             </div>
         }
@@ -175,21 +176,20 @@ else if (_error is not null)
 else if (!_busy)
 {
     <section class="intro">
-        <p>Fotografiere die ausliegenden Set-Karten. Die App erkennt die Karten direkt auf deinem Gerät
-           und zeigt alle Sets, oder sagt dir, dass drei Karten nachgelegt werden müssen.</p>
+        <p>@T.Intro</p>
         <ul>
-            <li>Karten auf einen dunklen, einfarbigen Untergrund legen.</li>
-            <li>Möglichst senkrecht von oben fotografieren, ohne Blitz-Spiegelungen.</li>
-            <li>Die Karten sollten sich nicht berühren.</li>
+            <li>@T.TipSurface</li>
+            <li>@T.TipAbove</li>
+            <li>@T.TipNoTouch</li>
         </ul>
-        <button class="btn link" @onclick="StartManual">Karten lieber von Hand eingeben</button>
+        <button class="btn link" @onclick="StartManual">@T.EnterManually</button>
     </section>
 }
 
 @code {
     private RenderFragment CardTile(int index) =>
         @<button class="card-tile @(_editing == index ? "editing" : "")" @onclick="() => Edit(index)"
-                 title="@CardText.Describe(_slots[index].Card)">
+                 title="@T.Describe(_slots[index].Card)">
             <CardView Card="_slots[index].Card" Highlight="SelectedSet?.Positions.Contains(index) == true"
                       Uncertain="_slots[index].Uncertain && !_slots[index].Edited" Landscape="_grid?.Landscape == true" />
             <span class="tile-number">@(index + 1)</span>

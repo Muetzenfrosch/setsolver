@@ -1,5 +1,9 @@
 @page "/not-found"
 @layout MainLayout
 
-<h3>Seite nicht gefunden</h3>
-<p><a href="./">Zur Startseite</a></p>
+<h3>@T.PageNotFound</h3>
+<p><a href="./">@T.BackToStart</a></p>
+
+@code {
+    [CascadingParameter] public Texts T { get; set; } = Texts.English;
+}
