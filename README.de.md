@@ -14,7 +14,7 @@ sie, dass drei Karten nachgelegt werden müssen.
 - **Nur statische Dateien**: Jeder Webserver (Nginx, Apache, …) genügt.
 - **Offline-fähig (PWA)**: Nach dem ersten Besuch auch ohne Netz nutzbar und zum Startbildschirm hinzufügbar.
 - **Deutsch und Englisch**: Die App startet auf Deutsch, wenn der Browser auf Deutsch eingestellt ist, sonst auf Englisch.
-- **Docker**: Ein schlankes Image mit Nginx und der App, siehe [Mit Docker](#mit-docker).
+- **Docker**: Ein schlankes Image mit Nginx und der App, auch auf [Docker Hub](https://hub.docker.com/r/muetzenfrosch/set-finder), siehe [Mit Docker](#mit-docker).
 
 <p align="center">
   <img src="docs/screenshot-beispiel.png" width="320"
@@ -59,7 +59,26 @@ Startbildschirm hinzufügen“.
 ### Mit Docker
 
 Das Image enthält nur einen schlanken Nginx (offizielles Image `nginx:stable-alpine-slim`) und die fertige App,
-zusammen etwa 14 MB (komprimiert). Es wird direkt aus dem Quellcode gebaut; .NET muss dafür nicht installiert sein.
+zusammen etwa 14 MB (komprimiert).
+
+**Fertiges Image** auf Docker Hub: [muetzenfrosch/set-finder](https://hub.docker.com/r/muetzenfrosch/set-finder),
+für amd64, arm64 und arm/v7 (z. B. Raspberry Pi).
+
+```bash
+docker run -d -p 8080:80 --restart unless-stopped --name set-finder muetzenfrosch/set-finder
+```
+
+Danach läuft die App unter <http://localhost:8080>. Der Tag `latest` ist immer die neueste Version, Tags wie `1.1`
+bleiben bei einer Version. Das Image wird bei jeder neuen Version und jeden Montag mit der neuesten stabilen
+Nginx-Version neu gebaut. Aktualisieren:
+
+```bash
+docker pull muetzenfrosch/set-finder
+docker rm -f set-finder
+docker run -d -p 8080:80 --restart unless-stopped --name set-finder muetzenfrosch/set-finder
+```
+
+**Selbst bauen** direkt aus dem Quellcode geht ohne installiertes .NET:
 
 ```bash
 git clone https://github.com/Muetzenfrosch/setsolver.git
@@ -68,10 +87,8 @@ docker build --pull -t set-finder .
 docker run -d -p 8080:80 --restart unless-stopped --name set-finder set-finder
 ```
 
-Danach läuft die App unter <http://localhost:8080>.
-
-**Aktualisieren:** Dank `--pull` verwendet jeder Bau die neueste stabile Nginx-Version (und zum Bauen das neueste
-.NET-10-SDK). Für Updates von App und Webserver also einfach neu bauen und den Container ersetzen:
+Dank `--pull` verwendet jeder Bau die neueste stabile Nginx-Version (und zum Bauen das neueste .NET-10-SDK). Für
+Updates von App und Webserver also einfach neu bauen und den Container ersetzen:
 
 ```bash
 git pull
@@ -82,7 +99,9 @@ docker run -d -p 8080:80 --restart unless-stopped --name set-finder set-finder
 
 Der Container spricht nur HTTP. Für den Offline-Modus und „Zum Startbildschirm hinzufügen“ braucht die App HTTPS,
 z. B. über einen Reverse Proxy (Nginx, Traefik, Caddy …) vor dem Container. Die Nginx-Konfiguration im Image
-steht in `deploy/docker/default.conf`.
+steht in `deploy/docker/default.conf`. Der Workflow `.github/workflows/docker.yml` veröffentlicht das Image auf
+Docker Hub; er braucht die Repository-Variable `DOCKERHUB_USERNAME` und das Secret `DOCKERHUB_TOKEN` (ein
+Zugangstoken von Docker Hub mit „Read & Write“).
 
 ## Spielregel in einem Satz
 

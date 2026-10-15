@@ -15,7 +15,7 @@ it tells you to add three more cards.
 - **Works offline (PWA)**: after the first visit it also works without a network connection and can be added
   to the home screen.
 - **English and German**: the app starts in German if the browser is set to German, otherwise in English.
-- **Docker**: a small image with Nginx and the app, see [With Docker](#with-docker).
+- **Docker**: a small image with Nginx and the app, also on [Docker Hub](https://hub.docker.com/r/muetzenfrosch/set-finder), see [With Docker](#with-docker).
 
 <p align="center">
   <img src="docs/screenshot-example.png" width="320"
@@ -59,7 +59,26 @@ GitHub Pages uses HTTPS, so offline mode and "Add to Home Screen" work there as 
 ### With Docker
 
 The image contains only a small Nginx (the official `nginx:stable-alpine-slim` image) and the finished app,
-about 14 MB in total (compressed). It is built straight from the source code; you do not need .NET installed.
+about 14 MB in total (compressed).
+
+**Ready-made image** from Docker Hub: [muetzenfrosch/set-finder](https://hub.docker.com/r/muetzenfrosch/set-finder),
+for amd64, arm64 and arm/v7 (e.g. Raspberry Pi).
+
+```bash
+docker run -d -p 8080:80 --restart unless-stopped --name set-finder muetzenfrosch/set-finder
+```
+
+The app is then running at <http://localhost:8080>. The tag `latest` is always the newest version; tags such as
+`1.1` stay on one version. The image is rebuilt for every new version and every Monday with the latest stable
+Nginx version. To update:
+
+```bash
+docker pull muetzenfrosch/set-finder
+docker rm -f set-finder
+docker run -d -p 8080:80 --restart unless-stopped --name set-finder muetzenfrosch/set-finder
+```
+
+**Building it yourself** straight from the source code works without .NET installed:
 
 ```bash
 git clone https://github.com/Muetzenfrosch/setsolver.git
@@ -68,10 +87,8 @@ docker build --pull -t set-finder .
 docker run -d -p 8080:80 --restart unless-stopped --name set-finder set-finder
 ```
 
-The app is then running at <http://localhost:8080>.
-
-**Updating:** thanks to `--pull`, every build uses the latest stable Nginx version (and the latest .NET 10 SDK
-for building). To update the app and the web server, simply rebuild and replace the container:
+Thanks to `--pull`, every build uses the latest stable Nginx version (and the latest .NET 10 SDK for building).
+To update the app and the web server, simply rebuild and replace the container:
 
 ```bash
 git pull
@@ -82,7 +99,9 @@ docker run -d -p 8080:80 --restart unless-stopped --name set-finder set-finder
 
 The container only speaks HTTP. Offline mode and "Add to Home Screen" need HTTPS, for example through a reverse
 proxy (Nginx, Traefik, Caddy, …) in front of the container. The Nginx configuration inside the image is in
-`deploy/docker/default.conf`.
+`deploy/docker/default.conf`. The workflow `.github/workflows/docker.yml` publishes the image on Docker Hub; it
+needs the repository variable `DOCKERHUB_USERNAME` and the secret `DOCKERHUB_TOKEN` (a Docker Hub access token
+with "Read & Write").
 
 ## The rule in one sentence
 
