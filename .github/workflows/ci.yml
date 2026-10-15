@@ -27,3 +27,20 @@ jobs:
           name: set-finder-wwwroot
           path: publish/wwwroot
           include-hidden-files: true
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker-Image bauen
+        run: docker build --pull --tag set-finder .
+
+      - name: Docker-Image prüfen
+        run: |
+          docker run --detach --name set-finder --publish 8080:80 set-finder
+          sleep 2
+          curl --fail --silent http://localhost:8080/ | grep --quiet blazor.webassembly
+          wasm=$(docker exec set-finder sh -c 'cd /usr/share/nginx/html/_framework && ls dotnet.native.*.wasm')
+          curl --fail --silent --head "http://localhost:8080/_framework/$wasm" | grep --ignore-case "content-type: application/wasm"
+          docker image ls set-finder

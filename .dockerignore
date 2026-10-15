@@ -1,0 +1,9 @@
+# Für das Docker-Image wird nur der Quellcode der App gebraucht.
+**/bin
+**/obj
+.git
+.github
+docs
+tests
+publish
+*.md
