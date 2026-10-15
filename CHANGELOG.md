@@ -5,6 +5,10 @@ Die fertige App jeder Version liegt als `set-finder-webserver-<Version>.zip` unt
 der Domain oder in einen Unterordner kopieren; für Apache liegt eine `.htaccess` bei, für Nginx steht eine
 Vorlage unter `deploy/nginx`.
 
+## 1.2 (noch nicht veröffentlicht)
+
+- Die App läuft auch auf GitHub Pages unter https://muetzenfrosch.github.io/setsolver/ und wird bei jedem Push auf main aktualisiert.
+
 ## 1.1 (15.10.2026)
 
 - Die App gibt es auf Deutsch und Englisch. Rechts oben wechselt ein Umschalter mit kleinen Flaggen (DE / US) die Sprache, die Wahl wird gemerkt. Ohne Wahl startet die App auf Deutsch, wenn der Browser auf Deutsch eingestellt ist, sonst auf Englisch.

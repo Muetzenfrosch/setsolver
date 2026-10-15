@@ -6,6 +6,8 @@ Eine Web-App fürs Handy, die beim Kartenspiel **SET** hilft: Man fotografiert d
 Handykamera, die App erkennt die Karten und zeigt, ob und welche Sets darin liegen. Gibt es kein Set, meldet
 sie, dass drei Karten nachgelegt werden müssen.
 
+**Ausprobieren:** <https://muetzenfrosch.github.io/setsolver/>
+
 - **.NET 10 (LTS), Blazor WebAssembly**: läuft vollständig im Browser.
 - **Keine Server-Logik, kein KI-Dienst**: Die Bilderkennung ist klassische Bildverarbeitung in C#.
   Das Foto verlässt das Gerät nie.
@@ -45,6 +47,14 @@ Für eine neue Version in CHANGELOG.md einen Abschnitt wie `## 1.2` ergänzen un
 **Releases** (`.github/workflows/release.yml`) mit dieser Version starten: Er legt das Release `v1.2` mit dem Text
 aus dem CHANGELOG an und hängt das Zip an. Alternativ selbst auf GitHub ein Release mit einem Tag wie `v1.2`
 veröffentlichen; der Workflow baut dann die App und hängt das Zip an.
+
+### Auf GitHub Pages
+
+Der Workflow `.github/workflows/pages.yml` veröffentlicht die App bei jedem Push auf `main` unter
+<https://muetzenfrosch.github.io/setsolver/>. Dafür muss GitHub Pages einmalig unter
+**Settings → Pages → Build and deployment → Source: GitHub Actions** eingeschaltet sein; bis dahin baut der
+Workflow die App nur. GitHub Pages nutzt HTTPS, daher funktionieren dort auch der Offline-Modus und „Zum
+Startbildschirm hinzufügen“.
 
 ### Mit Docker
 

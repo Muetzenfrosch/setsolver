@@ -6,6 +6,8 @@ A mobile web app that helps with the card game **SET**: take a photo of the card
 camera, and the app recognizes the cards and shows whether there are any sets and which ones. If there is no set,
 it tells you to add three more cards.
 
+**Try it:** <https://muetzenfrosch.github.io/setsolver/>
+
 - **.NET 10 (LTS), Blazor WebAssembly**: runs entirely in the browser.
 - **No server logic, no AI service**: the image recognition is classic image processing in C#.
   The photo never leaves the device.
@@ -46,6 +48,13 @@ To make a new version, add a section such as `## 1.2` to CHANGELOG.md and start 
 (`.github/workflows/release.yml`) under Actions with that version: it creates the release `v1.2` with the text
 from the changelog and attaches the zip. Alternatively, publish a release with a tag such as `v1.2` on GitHub
 yourself; the workflow then builds the app and attaches the zip.
+
+### On GitHub Pages
+
+The workflow `.github/workflows/pages.yml` publishes the app on every push to `main` at
+<https://muetzenfrosch.github.io/setsolver/>. GitHub Pages only has to be switched on once under
+**Settings → Pages → Build and deployment → Source: GitHub Actions**; until then, the workflow only builds the app.
+GitHub Pages uses HTTPS, so offline mode and "Add to Home Screen" work there as well.
 
 ### With Docker
 

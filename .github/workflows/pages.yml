@@ -1,0 +1,66 @@
+name: GitHub Pages
+
+# Veröffentlicht die App bei jedem Push auf main unter https://muetzenfrosch.github.io/setsolver/.
+# Voraussetzung: Settings > Pages > Source "GitHub Actions". Solange GitHub Pages nicht so eingeschaltet ist,
+# wird nur gebaut und nichts veröffentlicht.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    outputs:
+      eingeschaltet: ${{ steps.pages.outputs.eingeschaltet }}
+    steps:
+      - name: Ist GitHub Pages eingeschaltet?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          art=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || true)
+          if [ "$art" = "workflow" ]; then
+            echo "eingeschaltet=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::GitHub Pages ist nicht mit Source \"GitHub Actions\" eingeschaltet; es wird nichts veröffentlicht."
+            echo "eingeschaltet=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Veröffentlichen
+        run: |
+          dotnet publish src/SetGameSolver.Web --configuration Release --output publish
+          # GitHub Pages komprimiert selbst und kennt keine .htaccess.
+          find publish/wwwroot \( -name '*.br' -o -name '*.gz' \) -delete
+          rm publish/wwwroot/.htaccess
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish/wwwroot
+
+  veroeffentlichen:
+    needs: bauen
+    if: needs.bauen.outputs.eingeschaltet == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
