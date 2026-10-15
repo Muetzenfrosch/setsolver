@@ -5,6 +5,12 @@ Die fertige App jeder Version liegt als `set-finder-webserver-<Version>.zip` unt
 der Domain oder in einen Unterordner kopieren; für Apache liegt eine `.htaccess` bei, für Nginx steht eine
 Vorlage unter `deploy/nginx`.
 
+## 1.1 (15.10.2026)
+
+- Die App gibt es auf Deutsch und Englisch. Rechts oben wechselt ein Umschalter mit kleinen Flaggen (DE / US) die Sprache, die Wahl wird gemerkt. Ohne Wahl startet die App auf Deutsch, wenn der Browser auf Deutsch eingestellt ist, sonst auf Englisch.
+- Docker-Image mit Nginx (`nginx:stable-alpine-slim`) und der App, etwa 14 MB; `docker build --pull` holt dabei immer die neueste stabile Nginx-Version.
+- README auf Englisch (README.md) und Deutsch (README.de.md), mit Anleitung für Docker.
+
 ## 1.0 (15.10.2026)
 
 - „Beispiel“ legt bei jedem Tippen 12 neue, verschiedene Karten aus, mit den Symbolen der echten Karten, mal hochkant (3 × 4), mal quer (4 × 3).
