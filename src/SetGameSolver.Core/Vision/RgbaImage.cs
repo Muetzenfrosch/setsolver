@@ -50,6 +50,20 @@ public sealed class RgbaImage
     }
 
     /// <summary>Verkleinert das Bild per Flächenmittelung, falls die längere Seite größer als <paramref name="maxSide"/> ist.</summary>
+    /// <summary>Negativ des Bildes (Alpha bleibt).</summary>
+    public RgbaImage Inverted()
+    {
+        var result = new RgbaImage(Width, Height, (byte[])Pixels.Clone());
+        var px = result.Pixels;
+        for (var i = 0; i < px.Length; i += 4)
+        {
+            px[i] = (byte)(255 - px[i]);
+            px[i + 1] = (byte)(255 - px[i + 1]);
+            px[i + 2] = (byte)(255 - px[i + 2]);
+        }
+        return result;
+    }
+
     public RgbaImage DownscaleTo(int maxSide)
     {
         var scale = (double)maxSide / Math.Max(Width, Height);

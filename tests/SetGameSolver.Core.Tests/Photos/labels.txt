@@ -1,6 +1,8 @@
 # Echte Fotos mit der tatsächlichen Auslage, je drei Fotos pro Auslage.
 # IMG_3907-3933: Kunstlicht (14.10.2026) auf Holz, Fliesen, Glas, Teppich, hellem Tisch und weißer Decke.
 # IMG_3937-3951: Tageslicht (15.10.2026) auf Glastisch über Teppich, Fliesen, Holz, Teppich und weißer Decke.
+# IMG_3952-3960: Screenshots aus Set-Apps (PNG), Karten hier in Lesereihenfolge: 3952-3954 weiße Karten auf Grün,
+# 3955-3957 quer liegende Karten weiß auf weiß, 3958-3960 dieselbe App im Dunkelmodus (schwarze Karten).
 # Kartencode: Anzahl (1-3), Farbe (R=Rot, G=Grün, P=Lila), Füllung (s=voll, t=gestreift, o=leer),
 # Form (D=Raute, O=Oval, S=Welle). Beispiel: 2GtD = zwei grüne gestreifte Rauten.
 # Die Reihenfolge spielt keine Rolle; verglichen wird die Menge der erkannten Karten.
@@ -19,3 +21,12 @@ IMG_3940 IMG_3941 IMG_3942: 1RtD 2RoS 3PtO 1RoD 1GoO 2RsO 2GtD 3RsS 3RtS 3GoD 2R
 IMG_3943 IMG_3944 IMG_3945: 2GtO 2PsD 1PoD 2PtS 3PoO 3PtS 3GtO 3PsD 2PsO 2RtD 1PoO 3GtD
 IMG_3946 IMG_3947 IMG_3948: 2RsD 3RsO 1PtS 2PoO 3PoS 3GsS 1PsO 2PtD 1PtO 3PsO 1RoS 3RoD
 IMG_3949 IMG_3950 IMG_3951: 2RtO 2PsS 2RtS 1RoO 1GsD 1RtS 3RoO 2PtO 3PtD 2RoD 3GtS 1GsS
+IMG_3952: 2RtS 1GoS 3GoD 3GoO 3GtO 2PtO 1GtD 1RsS 2PsD 1PoS 2GsS 1PoD
+IMG_3953: 3PsO 2PtO 1GtS 1GsS 1PsD 2RsS 2RoD 3RtS 3GsS 2RtD 1RtD 2RsD
+IMG_3954: 2RsD 2PoS 1PsS 2RoD 2GsO 2RoO 3PoO 1RsO 3PtD 3PsS 1GsD 2GsS
+IMG_3955: 2PoD 2RoS 3GoS 1PsD 1GoD 2PtS 1PtD 2RtO 3GoD 3GtS 2GoD 3RtO
+IMG_3956: 3RoS 3RoD 1RtS 3PoD 1GtD 1PoD 1GsS 2GtS 3GoS 3PtO 1RtO 3PoO
+IMG_3957: 2GtO 2RtO 1PsO 1GsD 1PoO 1PtS 3PoS 2RoD 2GoO 1RoO 2PtO 1PtD
+IMG_3958: 2RsO 1PoS 1PoD 3GoD 1PtD 3GoO 3GtD 3GsD 3PoS 1GsS 2PsO 3PtS
+IMG_3959: 3RoO 2RsD 2PtS 3PsS 1PtS 2PsS 2GoO 2PsD 1GsD 2RtS 1PsS 2PoD
+IMG_3960: 3PsO 1RoS 2RoD 1GtS 3PtO 2GtD 1RoD 1PtS 3PoO 1GoS 2GoO 3GtO

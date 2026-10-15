@@ -15,9 +15,9 @@ public class PhotoTests(ITestOutputHelper output)
 {
     private static readonly string PhotoDir = Path.Combine(AppContext.BaseDirectory, "Photos");
 
-    // Stand 15.10.2026 (27 Kunstlicht- und 15 Tageslicht-Fotos): 501 von 513 Karten richtig, 1 falsch,
-    // 11 nicht gefunden. Die Grenzen schützen vor Verschlechterungen; bei Verbesserungen bitte nachziehen.
-    private const int MinCorrect = 498;
+    // Stand 15.10.2026 (27 Kunstlicht- und 15 Tageslicht-Fotos, 9 App-Screenshots): 609 von 621 Karten richtig,
+    // 1 falsch, 11 nicht gefunden. Die Grenzen schützen vor Verschlechterungen; bei Verbesserungen bitte nachziehen.
+    private const int MinCorrect = 606;
     private const int MaxWrong = 2;
 
     [Fact]
@@ -28,7 +28,7 @@ public class PhotoTests(ITestOutputHelper output)
         var wrongLayouts = new List<string>();
         foreach (var (name, expected) in Labels().OrderBy(l => l.Key))
         {
-            var image = Load(Path.Combine(PhotoDir, name + ".jpg"));
+            var image = Load(PhotoPath(name));
             var detected = SetRecognizer.Recognize(image);
             // Doppelt erkannte Karten zählen als Fehler.
             var ok = detected.Select(d => d.Card).Distinct().Count(expected.Contains);
@@ -59,6 +59,10 @@ public class PhotoTests(ITestOutputHelper output)
         Assert.True(wrong <= MaxWrong, $"{wrong} Karten falsch erkannt (höchstens {MaxWrong}).");
         Assert.Empty(wrongLayouts);
     }
+
+    /// <summary>Fotos liegen als JPEG, Screenshots als PNG.</summary>
+    internal static string PhotoPath(string name) =>
+        new[] { ".jpg", ".png" }.Select(ext => Path.Combine(PhotoDir, name + ext)).First(File.Exists);
 
     internal static RgbaImage Load(string path)
     {

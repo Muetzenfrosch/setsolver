@@ -27,6 +27,7 @@ public static class CardClassifier
     private const double DiamondMaxExtent = 0.64;
     private const double SolidMinScore = 0.45; // Füllung minus 0,8 × Streifenmuster
     private const double OpenMaxFill = 0.14;
+    private const double OutlineInkShare = 0.7; // Ring am Symbolrand gehört zum Umriss, solange so viel davon Tinte ist
     private const double GreenMinHue = 70, PurpleMinHue = 200, RedMinHue = 330;
 
     // Lage der Symbolmitten (Abstand zur Kartenmitte relativ zur Kartenhöhe): bei zwei Symbolen ≈ 0,14,
@@ -120,7 +121,28 @@ public static class CardClassifier
         foreach (var s in symbols)
             foreach (var i in s.Pixels)
                 symbolMask.Data[i] = true;
-        var interior = symbolMask.Erode(Math.Max(3, w / 40));
+        // Ins Innere erst hinter dem Umriss: Manche Apps zeichnen kräftige Umrisse, deshalb von außen Ring um Ring
+        // prüfen, bis die Tinte nicht mehr fast lückenlos ist (bei vollen Symbolen bleibt es beim Mindestabstand).
+        var depth = Math.Max(3, w / 40);
+        var outside = symbolMask;
+        for (var k = 1; k <= w / 16; k++)
+        {
+            var inside = symbolMask.Erode(k);
+            int ring = 0, inked = 0;
+            for (var i = 0; i < inside.Data.Length; i++)
+            {
+                if (!outside.Data[i] || inside.Data[i]) continue;
+                ring++;
+                if (inkMask.Data[i]) inked++;
+            }
+            outside = inside;
+            if (ring == 0 || inked < OutlineInkShare * ring)
+            {
+                depth = Math.Max(depth, k);
+                break;
+            }
+        }
+        var interior = symbolMask.Erode(depth);
         var silhouetteInk = symbols.SelectMany(s => s.Pixels).Select(i => ink[i]).OrderBy(v => v).ToArray();
         var strong = silhouetteInk[(int)(0.9 * (silhouetteInk.Length - 1))];
         double interiorSum = 0, interiorSq = 0;

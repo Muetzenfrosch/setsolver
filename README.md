@@ -73,6 +73,8 @@ regelt das Caching. Nötig sind `AllowOverride All` für das Verzeichnis sowie `
    Schräg fotografierte Karten erscheinen als Trapez; sie zählen, wenn ihr Umriss zu einem Viereck mit geraden
    Kanten passt. Die Ecken werden über an die Kanten angepasste Geraden bestimmt. Flächen, die viel größer als
    die übrigen Karten sind (z. B. eine Fliese so hell wie die Karten), zählen nicht.
+   Findet sich so kaum eine Karte, wird die Suche mit dem Negativ des Bildes wiederholt. Damit klappt auch der
+   Dunkelmodus von Set-Apps (schwarze Karten); deren Papier wird für die Auswertung weiß gerechnet.
 3. **Entzerren**: Jede Karte wird per Homographie in ein Hochformat-Bild von 160 × 250 Pixeln umgerechnet.
 4. **Klassifizieren** (nach Weißabgleich auf das Kartenpapier; Schatten auf der Karte werden herausgerechnet,
    weil sie das Papier nur dunkler, aber nicht farbig machen):
@@ -81,6 +83,7 @@ regelt das Caching. Nötig sind `AllowOverride All` für das Verzeichnis sowie `
    - *Füllung*: Farbanteil im Inneren der Symbole relativ zum Umriss (voll ≈ 1, gestreift ≈ 0,3, leer ≈ 0).
    - *Farbe*: Farbton der kräftig gefärbten Pixel (Grün, Lila, sonst Rot).
    Ragt eine Karte über den Bildrand, zählen nur die sichtbaren Symbole, und die Karte gilt als unsicher.
+   Kräftige Umrisse (wie in manchen Set-Apps) werden vor dem Messen der Füllung übersprungen.
 5. **Raster der Auslage**: Jede Karte wird mit ihrem nächsten Nachbarn rechts und unten verbunden; entlang
    dieser Verbindungen werden Zeilen und Spalten abgezählt (auch bei schräg fotografierten Auslagen). Ein etwa
    doppelter Abstand bedeutet einen freien Platz. Die erkannten Karten erscheinen in der App im selben Raster
@@ -95,11 +98,12 @@ Hand hinzugefügt werden.
 ### Grenzen und nächste Schritte
 
 Die Schwellwerte sind an 42 echten Fotos (27 bei Kunstlicht, 15 bei Tageslicht; 513 Karten auf Holz, Fliesen,
-Glas, Teppich und Decke) eingestellt, die als Testdaten in `tests/SetGameSolver.Core.Tests/Photos` liegen;
+Glas, Teppich und Decke) und 9 Screenshots aus Set-Apps (108 Karten, auch im Dunkelmodus) eingestellt, die als Testdaten in `tests/SetGameSolver.Core.Tests/Photos` liegen;
 `labels.txt` beschreibt jede Auslage zeilenweise (z. B. `2RsO` = zwei rote volle Ovale; Farben R/G/P,
-Füllung s/t/o = voll/gestreift/leer, Formen D/O/S), `layouts.txt` ihr Raster. Stand: 501 Karten richtig,
-1 falsch (als unsicher markiert), 11 nicht gefunden – meist wegen harter Schatten, Spiegelungen auf Folie oder
-hellem Untergrund, der mit Karten verschmilzt; das Raster stimmt bei allen 42 Fotos. Neue Fotos einfach
+Füllung s/t/o = voll/gestreift/leer, Formen D/O/S), `layouts.txt` ihr Raster. Stand: 609 von 621 Karten
+richtig, 1 falsch (als unsicher markiert), 11 nicht gefunden – meist wegen harter Schatten, Spiegelungen auf Folie
+oder hellem Untergrund, der mit Karten verschmilzt; die Screenshots werden vollständig erkannt, und das Raster
+stimmt bei allen 51 Bildern. Neue Fotos einfach
 dazulegen und beschriften.
 
 Am besten funktioniert die Erkennung, wenn sich die Karten nicht berühren und von oben ohne harte Schatten oder
