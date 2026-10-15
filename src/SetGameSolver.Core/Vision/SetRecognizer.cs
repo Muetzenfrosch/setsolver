@@ -20,35 +20,28 @@ public static class SetRecognizer
         foreach (var quad in CardDetector.FindCards(work))
         {
             var patch = CardPatch.Extract(work, quad);
-            var classified = CardClassifier.Classify(patch);
+            var classified = CardClassifier.Classify(patch, CutOff(quad, work.Width, work.Height));
             if (classified is null)
                 continue;
             var original = new Quad(quad.A * scale, quad.B * scale, quad.C * scale, quad.D * scale);
             result.Add(new DetectedCard(original, classified.Card, classified.Features, classified.Uncertain));
         }
-        return SortInReadingOrder(result);
+        // Zeilenweise von oben links nach unten rechts, damit die Nummerierung zum Raster der Auslage passt.
+        var grid = CardLayout.Arrange(result.Select(d => d.Quad).ToList());
+        return result
+            .Select((card, i) => (Card: card, Cell: grid.Cells[i]))
+            .OrderBy(t => t.Cell.Row)
+            .ThenBy(t => t.Cell.Column)
+            .Select(t => t.Card)
+            .ToList();
     }
 
-    /// <summary>Sortiert Karten zeilenweise von oben links nach unten rechts, damit die Nummerierung zur Auslage passt.</summary>
-    internal static List<DetectedCard> SortInReadingOrder(List<DetectedCard> cards)
+    /// <summary>Liegt eine Kartenseite auf dem Bildrand, ist die Karte vermutlich abgeschnitten.</summary>
+    internal static bool CutOff(Quad quad, int width, int height)
     {
-        if (cards.Count == 0)
-            return cards;
-        var heights = cards
-            .Select(c => c.Quad.Corners.Max(p => p.Y) - c.Quad.Corners.Min(p => p.Y))
-            .OrderBy(h => h)
-            .ToArray();
-        var rowTolerance = heights[heights.Length / 2] * 0.5;
-
-        var rows = new List<List<DetectedCard>>();
-        foreach (var card in cards.OrderBy(c => c.Quad.Center.Y))
-        {
-            var row = rows.LastOrDefault();
-            if (row is not null && card.Quad.Center.Y - row.Average(c => c.Quad.Center.Y) < rowTolerance)
-                row.Add(card);
-            else
-                rows.Add([card]);
-        }
-        return rows.SelectMany(r => r.OrderBy(c => c.Quad.Center.X)).ToList();
+        var margin = 0.006 * Math.Max(width, height);
+        int Count(Func<Point2, bool> near) => quad.Corners.Count(near);
+        return Count(p => p.X < margin) >= 2 || Count(p => p.Y < margin) >= 2
+            || Count(p => p.X > width - 1 - margin) >= 2 || Count(p => p.Y > height - 1 - margin) >= 2;
     }
 }

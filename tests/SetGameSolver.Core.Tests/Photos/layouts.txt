@@ -1,0 +1,45 @@
+# Raster der Auslage je Foto: Zeilen x Spalten, so wie die Karten auf dem Foto liegen.
+# Fehlt eine Karte in der Erkennung, bleibt das Raster gleich groß; ihr Platz bleibt frei.
+
+IMG_3907: 3x4
+IMG_3908: 3x4
+IMG_3909: 3x4
+IMG_3910: 3x4
+IMG_3911: 4x3
+IMG_3912: 4x3
+IMG_3913: 3x4
+IMG_3914: 3x4
+IMG_3915: 4x3
+IMG_3916: 3x5
+IMG_3917: 5x3
+IMG_3918: 3x5
+IMG_3919: 4x3
+IMG_3920: 3x4
+IMG_3921: 4x3
+IMG_3922: 3x4
+IMG_3923: 4x3
+IMG_3924: 4x3
+IMG_3925: 3x4
+IMG_3926: 4x3
+IMG_3927: 4x3
+IMG_3928: 4x3
+IMG_3929: 3x4
+IMG_3930: 3x4
+IMG_3931: 4x3
+IMG_3932: 3x4
+IMG_3933: 4x3
+IMG_3937: 3x4
+IMG_3938: 4x3
+IMG_3939: 3x4
+IMG_3940: 4x3
+IMG_3941: 3x4
+IMG_3942: 3x4
+IMG_3943: 3x4
+IMG_3944: 3x4
+IMG_3945: 4x3
+IMG_3946: 3x4
+IMG_3947: 3x4
+IMG_3948: 4x3
+IMG_3949: 4x3
+IMG_3950: 4x3
+IMG_3951: 3x4

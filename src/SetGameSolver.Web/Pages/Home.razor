@@ -2,6 +2,7 @@
 @page "/index.html"
 @using SetGameSolver.Core.Model
 @using SetGameSolver.Core.Solving
+@using SetGameSolver.Core.Vision
 
 <PageTitle>Set-Finder</PageTitle>
 <SymbolDefs />
@@ -110,21 +111,46 @@ else if (_error is not null)
 {
     <section class="cards">
         <h2>Erkannte Karten</h2>
-        <p class="hint">Antippen, um eine falsch erkannte Karte zu korrigieren.</p>
-        <div class="card-grid">
-            @for (var i = 0; i < _slots.Count; i++)
-            {
-                var index = i;
-                var slot = _slots[i];
-                <button class="card-tile @(_editing == i ? "editing" : "")" @onclick="() => Edit(index)"
-                        title="@CardText.Describe(slot.Card)">
-                    <CardView Card="slot.Card" Highlight="SelectedSet?.Positions.Contains(i) == true"
-                              Uncertain="slot.Uncertain && !slot.Edited" />
-                    <span class="tile-number">@(i + 1)</span>
-                </button>
-            }
-            <button class="card-tile add" @onclick="AddCard" title="Karte hinzufügen">+</button>
-        </div>
+        <p class="hint">Antippen, um eine falsch erkannte Karte zu korrigieren.@(HasFreeCells ? " Ein freier Platz (?) bedeutet: Dort liegt eine Karte, die nicht erkannt wurde. Antippen, um sie einzutragen." : "")</p>
+        @if (_grid is not null)
+        {
+            @* Raster wie auf dem Foto: gleiche Zeilen und Spalten, freie Plätze für nicht erkannte Karten. *@
+            <div class="card-grid raster @(_grid.Landscape ? "landscape" : "")"
+                 style="grid-template-columns: repeat(@GridColumns, minmax(0, var(--tile-max)))">
+                @for (var r = 0; r < GridRows; r++)
+                {
+                    for (var c = 0; c < GridColumns; c++)
+                    {
+                        var cell = new GridCell(r, c);
+                        var index = _slots.FindIndex(s => s.Cell == cell);
+                        if (index >= 0)
+                        {
+                            @CardTile(index)
+                        }
+                        else if (r < _grid.Rows && c < _grid.Columns)
+                        {
+                            <button class="card-tile free" @onclick="() => AddCard(cell)" title="Hier fehlt eine Karte">?</button>
+                        }
+                        else
+                        {
+                            @* Platz neben von Hand ergänzten Karten außerhalb des Fotos *@
+                            <span></span>
+                        }
+                    }
+                }
+                <button class="card-tile add" @onclick="() => AddCard()" title="Karte hinzufügen">+</button>
+            </div>
+        }
+        else
+        {
+            <div class="card-grid">
+                @for (var i = 0; i < _slots.Count; i++)
+                {
+                    @CardTile(i)
+                }
+                <button class="card-tile add" @onclick="() => AddCard()" title="Karte hinzufügen">+</button>
+            </div>
+        }
 
         @if (_editing is int e && e < _slots.Count)
         {
@@ -158,4 +184,14 @@ else if (!_busy)
         </ul>
         <button class="btn link" @onclick="StartManual">Karten lieber von Hand eingeben</button>
     </section>
+}
+
+@code {
+    private RenderFragment CardTile(int index) =>
+        @<button class="card-tile @(_editing == index ? "editing" : "")" @onclick="() => Edit(index)"
+                 title="@CardText.Describe(_slots[index].Card)">
+            <CardView Card="_slots[index].Card" Highlight="SelectedSet?.Positions.Contains(index) == true"
+                      Uncertain="_slots[index].Uncertain && !_slots[index].Edited" Landscape="_grid?.Landscape == true" />
+            <span class="tile-number">@(index + 1)</span>
+        </button>;
 }

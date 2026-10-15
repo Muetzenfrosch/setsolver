@@ -38,16 +38,18 @@ public static class CardDetector
         if (candidates.Count == 0)
             return [];
 
-        // Kleine Ausreißer (Lichtreflexe, Papierschnipsel) relativ zur typischen Kartengröße verwerfen.
+        // Ausreißer relativ zur typischen Kartengröße verwerfen: kleine (Lichtreflexe, Papierschnipsel) und
+        // große (eine Fliese so hell wie die Karten, die mehrere Karten umschließt).
         var median = candidates.Select(c => c.Area).OrderBy(a => a).ElementAt(candidates.Count / 2);
+        var sized = candidates.Where(c => c.Area > 0.4 * median && c.Area < 3 * median).ToList();
         // Karten, die über den Bildrand hinausragen, lassen sich nicht sicher erkennen.
         var tolerance = 0.01 * Math.Max(w, h);
         bool Inside(Quad q) => q.Corners.All(p =>
             p.X >= -tolerance && p.Y >= -tolerance && p.X <= w + tolerance && p.Y <= h + tolerance);
         // Helle Innenflächen offener Symbole können selbst wie kleine Karten aussehen; sie liegen in einer Karte.
-        bool Nested((Quad Quad, double Area) c) => candidates.Any(o => o.Area > c.Area && Contains(o.Quad, c.Quad.Center));
-        return candidates
-            .Where(c => c.Area > 0.4 * median && Inside(c.Quad) && !Nested(c))
+        bool Nested((Quad Quad, double Area) c) => sized.Any(o => o.Area > c.Area && Contains(o.Quad, c.Quad.Center));
+        return sized
+            .Where(c => Inside(c.Quad) && !Nested(c))
             .Select(c => c.Quad)
             .OrderBy(q => q.Center.Y)
             .ThenBy(q => q.Center.X)

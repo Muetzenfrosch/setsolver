@@ -15,12 +15,14 @@ public partial class Home : IAsyncDisposable
 
     private sealed record PhotoInfo(int Width, int Height, string Url);
 
-    private sealed class Slot(Card card, Quad? quad, bool uncertain)
+    private sealed class Slot(Card card, Quad? quad, bool uncertain, GridCell? cell)
     {
         public Card Card { get; set; } = card;
         public Quad? Quad { get; } = quad;
         public bool Uncertain { get; } = uncertain;
         public bool Edited { get; set; }
+        /// <summary>Platz im Raster der Auslage (nur wenn die Karten aus einem Foto stammen).</summary>
+        public GridCell? Cell { get; } = cell;
     }
 
     [Inject] private IJSRuntime JS { get; set; } = default!;
@@ -31,6 +33,7 @@ public partial class Home : IAsyncDisposable
 
     private PhotoInfo? _photo;
     private readonly List<Slot> _slots = [];
+    private CardGrid? _grid; // Raster der Auslage auf dem Foto; null: Karten einfach der Reihe nach zeigen
     private SolveResult? _result;
     private int _selectedSet;
     private int? _editing;
@@ -43,6 +46,11 @@ public partial class Home : IAsyncDisposable
         _result is { HasSet: true } r && _selectedSet < r.Sets.Count ? r.Sets[_selectedSet] : null;
 
     private int UncertainCount => _slots.Count(s => s.Uncertain && !s.Edited);
+
+    private int GridRows => Math.Max(_grid?.Rows ?? 0, _slots.Max(s => s.Cell?.Row + 1) ?? 0);
+    private int GridColumns => Math.Max(_grid?.Columns ?? 0, _slots.Max(s => s.Cell?.Column + 1) ?? 0);
+    private bool HasFreeCells => _grid is not null &&
+        _slots.Count(s => s.Cell is { } c && c.Row < _grid.Rows && c.Column < _grid.Columns) < _grid.Rows * _grid.Columns;
 
     private double LabelRadius => _photo is null ? 10 : Math.Max(_photo.Width, _photo.Height) / 60.0;
 
@@ -75,6 +83,7 @@ public partial class Home : IAsyncDisposable
 
             _photo = photo;
             _slots.Clear();
+            _grid = null;
             _result = null;
             _busy = true;
             StateHasChanged();
@@ -87,7 +96,10 @@ public partial class Home : IAsyncDisposable
             var detected = SetRecognizer.Recognize(new RgbaImage(photo.Width, photo.Height, pixels));
             watch.Stop();
 
-            _slots.AddRange(detected.Select(d => new Slot(d.Card, d.Quad, d.Uncertain)));
+            // Die Karten kommen schon zeilenweise sortiert; das Raster bestimmt zusätzlich die freien Plätze.
+            if (detected.Count > 0)
+                _grid = CardLayout.Arrange(detected.Select(d => d.Quad).ToList());
+            _slots.AddRange(detected.Select((d, i) => new Slot(d.Card, d.Quad, d.Uncertain, _grid?.Cells[i])));
             // Invariante Globalisierung (kleinerer Download): Dezimalkomma von Hand setzen.
             _elapsed = watch.Elapsed.TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture).Replace('.', ',') + " s";
             Solve();
@@ -125,13 +137,30 @@ public partial class Home : IAsyncDisposable
         Solve();
     }
 
-    private void AddCard()
+    /// <summary>
+    /// Fügt eine Karte hinzu: auf dem angetippten freien Platz, sonst im Raster hinter der letzten Karte.
+    /// </summary>
+    private void AddCard(GridCell? cell = null)
     {
         // Eine Karte vorschlagen, die noch nicht ausliegt.
         var used = _slots.Select(s => s.Card).ToHashSet();
         var card = Card.AllCards.FirstOrDefault(c => !used.Contains(c));
-        _slots.Add(new Slot(card, null, false) { Edited = true });
-        _editing = _slots.Count - 1;
+        if (_grid is not null && cell is null)
+        {
+            var columns = GridColumns;
+            var next = _slots.Select(s => s.Cell is { } c ? c.Row * columns + c.Column + 1 : 0).DefaultIfEmpty(0).Max();
+            cell = new GridCell(next / columns, next % columns);
+        }
+        var slot = new Slot(card, null, false, cell) { Edited = true };
+        _slots.Add(slot);
+        if (_grid is not null)
+        {
+            // Nummern zeilenweise wie im Raster.
+            var ordered = _slots.OrderBy(s => s.Cell?.Row).ThenBy(s => s.Cell?.Column).ToList();
+            _slots.Clear();
+            _slots.AddRange(ordered);
+        }
+        _editing = _slots.IndexOf(slot);
         Solve();
     }
 
@@ -140,6 +169,7 @@ public partial class Home : IAsyncDisposable
         _manual = true;
         _photo = null;
         _slots.Clear();
+        _grid = null;
         _elapsed = null;
         Solve();
     }

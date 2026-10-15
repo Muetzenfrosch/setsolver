@@ -35,7 +35,9 @@ public static class CardClassifier
     private const double TwoSymbolOffset = 0.07;
     private const double ThreeSymbolOffset = 0.19;
 
-    public static ClassifiedCard? Classify(CardPatch patch)
+    /// <param name="patch">Die entzerrte Karte.</param>
+    /// <param name="cutOff">Die Karte ragt über den Bildrand; die Lage der Symbole sagt dann nichts über ihre Anzahl.</param>
+    public static ClassifiedCard? Classify(CardPatch patch, bool cutOff = false)
     {
         var w = patch.Width;
         var h = patch.Height;
@@ -162,7 +164,9 @@ public static class CardClassifier
         // Lücke dazwischen oder neben der Mitte zu einer Karte mit dreien.
         var count = symbols.Count;
         var implied = count;
-        if (count == 1)
+        if (cutOff)
+            uncertain = true;
+        else if (count == 1)
         {
             var offset = Math.Abs(symbols[0].Centroid.Y - h / 2.0) / h;
             implied = offset > ThreeSymbolOffset ? 3 : offset > TwoSymbolOffset ? 2 : 1;

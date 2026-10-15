@@ -124,6 +124,13 @@ html, body {
 .card-tile.add {
     aspect-ratio: 57 / 89; border: 2px dashed var(--border); color: var(--muted); font-size: 2rem; font-weight: 300;
 }
+.card-grid.raster { --tile-max: 92px; }
+.card-grid.raster.landscape { --tile-max: 132px; }
+.card-tile.free {
+    aspect-ratio: 57 / 89; border: 2px dashed var(--border); color: var(--muted); font-size: 1.3rem; opacity: 0.7;
+}
+.card-grid.landscape .card-tile.add, .card-grid.landscape .card-tile.free { aspect-ratio: 89 / 57; }
+.card-grid.landscape .tile-number { top: 2px; left: 2px; min-width: 16px; height: 16px; line-height: 16px; font-size: 0.65rem; }
 .tile-number {
     position: absolute; top: 3px; left: 3px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
     background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 0.75rem; line-height: 20px; text-align: center;
