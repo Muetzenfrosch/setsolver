@@ -42,8 +42,10 @@ into any subfolder, and you are done. (Only in version 0.5 are the files still i
 zip.) Notes on Apache and Nginx are in [Publishing](#publishing) below; what changed in each version is in
 [CHANGELOG.md](CHANGELOG.md) (in German).
 
-To make a new version, publish a release with a tag such as `v1.1` on GitHub: the workflow
-`.github/workflows/release.yml` then builds the app and attaches the zip.
+To make a new version, add a section such as `## 1.2` to CHANGELOG.md and start the workflow **Releases**
+(`.github/workflows/release.yml`) under Actions with that version: it creates the release `v1.2` with the text
+from the changelog and attaches the zip. Alternatively, publish a release with a tag such as `v1.2` on GitHub
+yourself; the workflow then builds the app and attaches the zip.
 
 ### With Docker
 

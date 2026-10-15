@@ -41,8 +41,10 @@ beliebigen Unterordner kopieren, fertig. (Nur bei Version 0.5 liegen die Dateien
 `wwwroot`.) Hinweise zu Apache und Nginx stehen unten unter [Veröffentlichen](#veröffentlichen), was sich in
 jeder Version geändert hat, in [CHANGELOG.md](CHANGELOG.md).
 
-Für eine neue Version genügt es, auf GitHub ein Release mit einem Tag wie `v1.1` zu veröffentlichen: Der Workflow
-`.github/workflows/release.yml` baut dann die App und hängt das Zip an.
+Für eine neue Version in CHANGELOG.md einen Abschnitt wie `## 1.2` ergänzen und unter Actions den Workflow
+**Releases** (`.github/workflows/release.yml`) mit dieser Version starten: Er legt das Release `v1.2` mit dem Text
+aus dem CHANGELOG an und hängt das Zip an. Alternativ selbst auf GitHub ein Release mit einem Tag wie `v1.2`
+veröffentlichen; der Workflow baut dann die App und hängt das Zip an.
 
 ### Mit Docker
 

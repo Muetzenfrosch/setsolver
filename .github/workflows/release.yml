@@ -2,12 +2,18 @@ name: Releases
 
 # Baut die App und hängt sie als set-finder-webserver-<Version>.zip an ein Release.
 # - Neues Release: Auf GitHub ein Release mit Tag vX.Y veröffentlichen; das Zip wird dann automatisch angehängt.
-# - Von Hand ("Run workflow"): legt die Releases der bisherigen Versionen 0.5 bis 1.0 an, mit dem Text aus CHANGELOG.md.
+# - Oder von Hand ("Run workflow") mit einer Version wie 1.2: legt das Release vX.Y auf dem gewählten Branch an,
+#   mit dem Text aus CHANGELOG.md (Abschnitt "## X.Y") und dem Zip.
+# - Mit "0.5-1.0" statt einer Version: legt die Releases der bisherigen Versionen 0.5 bis 1.0 an.
 
 on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, z. B. 1.2 (muss in CHANGELOG.md stehen)"
+        required: true
 
 permissions:
   contents: write
@@ -35,8 +41,43 @@ jobs:
           (cd publish/wwwroot && zip -qr -X "$zip" .)
           gh release upload "$TAG" "$zip" --clobber
 
+  neue-version:
+    if: github.event_name == 'workflow_dispatch' && inputs.version != '0.5-1.0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version und Text aus CHANGELOG.md
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then echo "::error::Version wie 1.2 angeben"; exit 1; fi
+          awk -v v="$VERSION" '/^## /{p=($2==v); next} p' CHANGELOG.md > notes.md
+          if ! grep -q . notes.md; then echo "::error::CHANGELOG.md hat keinen Abschnitt ## $VERSION"; exit 1; fi
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Veröffentlichen
+        run: dotnet publish src/SetGameSolver.Web --configuration Release --output publish
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          zip="$PWD/set-finder-webserver-$VERSION.zip"
+          (cd publish/wwwroot && zip -qr -X "$zip" .)
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            gh release upload "v$VERSION" "$zip" --clobber
+          else
+            gh release create "v$VERSION" "$zip" --target "$GITHUB_SHA" --title "Version $VERSION" \
+              --notes-file notes.md --latest
+          fi
+
   bisherige-versionen:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.version == '0.5-1.0'
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1 # der Reihe nach, damit 1.0 das neueste Release ist
