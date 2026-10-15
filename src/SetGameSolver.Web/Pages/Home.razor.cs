@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SetGameSolver.Core.Model;
 using SetGameSolver.Core.Solving;
+using SetGameSolver.Core.Synthetic;
 using SetGameSolver.Core.Vision;
 
 namespace SetGameSolver.Web.Pages;
@@ -66,8 +67,9 @@ public partial class Home : IAsyncDisposable
     private async Task LoadSampleAsync()
     {
         var module = await ModuleAsync();
-        var sample = Random.Shared.Next(2) == 0 ? "sample/auslage-mit-sets.jpg" : "sample/auslage-ohne-set.jpg";
-        await RunAsync(() => module.InvokeAsync<PhotoInfo?>("loadFromUrl", sample, MaxSide));
+        // Jedes Mal 12 neue Karten; der Browser zeichnet das Bild, danach läuft die normale Erkennung.
+        var sample = SampleScene.Create(Random.Shared);
+        await RunAsync(() => module.InvokeAsync<PhotoInfo?>("loadFromSvg", sample.Svg, MaxSide));
     }
 
     private async Task RunAsync(Func<ValueTask<PhotoInfo?>> load)

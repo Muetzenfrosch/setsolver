@@ -10,12 +10,7 @@ public static class CardText
     public static string Name(Shading s) => s switch { Shading.Solid => "Voll", Shading.Striped => "Gestreift", _ => "Leer" };
     public static string Name(Shape s) => s switch { Shape.Diamond => "Raute", Shape.Oval => "Oval", _ => "Welle" };
 
-    public static string CssColor(Color c) => c switch
-    {
-        Color.Red => "#e6462d",
-        Color.Green => "#11924a",
-        _ => "#54289b",
-    };
+    public static string CssColor(Color c) => SetGameSolver.Core.Synthetic.CardShapes.InkColor(c);
 
     public static string Describe(Card c) =>
         $"{Name(c.Number)} × {Name(c.Color)}, {Name(c.Shading)}, {Name(c.Shape)}";

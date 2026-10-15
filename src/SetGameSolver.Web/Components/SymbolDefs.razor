@@ -1,10 +1,11 @@
 @* Gemeinsame Streifenmuster für alle Karten-SVGs auf der Seite: feine senkrechte Linien wie auf den echten Karten. *@
+@using SetGameSolver.Core.Synthetic
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
         @foreach (var (name, color) in Patterns)
         {
-            <pattern id="stripes-@name" width="1.1" height="4" patternUnits="userSpaceOnUse">
-                <rect width="0.4" height="4" fill="@color" />
+            <pattern id="stripes-@name" width="@CardShapes.StripePeriod" height="4" patternUnits="userSpaceOnUse">
+                <rect width="@CardShapes.StripeWidth" height="4" fill="@color" />
             </pattern>
         }
     </defs>

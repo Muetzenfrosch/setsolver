@@ -23,7 +23,7 @@ nachgelegt. Siehe [Wikipedia](https://de.wikipedia.org/wiki/Set_(Spiel)) und
 | `src/SetGameSolver.Core/Model` | Karte und ihre vier Eigenschaften |
 | `src/SetGameSolver.Core/Solving` | Set-Suche (alle Sets in einer Auslage beliebiger Größe) |
 | `src/SetGameSolver.Core/Vision` | Bilderkennung: Karten finden, entzerren, klassifizieren |
-| `src/SetGameSolver.Core/Synthetic` | Erzeugt künstliche Kartenfotos für Tests und Beispielbilder |
+| `src/SetGameSolver.Core/Synthetic` | Kartensymbole wie auf den echten Karten, Beispielbilder (SVG) und künstliche Kartenfotos für Tests |
 | `src/SetGameSolver.Web` | Blazor-WebAssembly-Oberfläche |
 | `tests/SetGameSolver.Core.Tests` | xUnit-Tests für Regeln und Erkennung |
 | `deploy/nginx` | Beispielkonfiguration für Nginx (Apache: `.htaccess` wird mit veröffentlicht) |

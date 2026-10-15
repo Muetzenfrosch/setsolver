@@ -1,4 +1,5 @@
 @using SetGameSolver.Core.Model
+@using SetGameSolver.Core.Synthetic
 @* Zeichnet eine Set-Karte als SVG (Hochformat, quer gedreht mit Landscape). Streifenmuster kommen aus <SymbolDefs />. *@
 
 <svg class="card-view @(Highlight ? "highlight" : "") @(Uncertain ? "uncertain" : "")"
@@ -7,18 +8,18 @@
     <rect x="0.75" y="0.75" width="55.5" height="87.5" rx="4" class="card-face" />
     @for (var i = 0; i < Count; i++)
     {
-        var cy = 44.5 + (i - (Count - 1) / 2.0) * SymbolSpacing;
+        var cy = CardShapes.SymbolCenterY(i, Count);
         <g transform="translate(28.5 @cy.ToString(System.Globalization.CultureInfo.InvariantCulture))">
             @switch (Card.Shape)
             {
                 case Shape.Diamond:
-                    <polygon points="-19,0 0,-9.1 19,0 0,9.1" fill="@Fill" stroke="@Ink" stroke-width="@StrokeWidth" />
+                    <polygon points="@CardShapes.DiamondPoints" fill="@Fill" stroke="@Ink" stroke-width="@StrokeWidth" />
                     break;
                 case Shape.Oval:
                     <rect x="-18.75" y="-8.75" width="37.5" height="17.5" rx="8.75" fill="@Fill" stroke="@Ink" stroke-width="@StrokeWidth" />
                     break;
                 default:
-                    <path d="@SquigglePath" fill="@Fill" stroke="@Ink" stroke-width="@StrokeWidth" />
+                    <path d="@CardShapes.SquigglePath" fill="@Fill" stroke="@Ink" stroke-width="@StrokeWidth" />
                     break;
             }
         </g>
@@ -27,20 +28,8 @@
 </svg>
 
 @code {
-    // Maße wie auf den echten Karten (Einheit ≈ mm, Karte 57 × 89): Symbole ≈ 37 × 18, Abstand der Mitten ≈ 25,7.
-    // Die Welle ist punktsymmetrisch und wurde aus Fotos echter Karten abgenommen.
-    private const double SymbolSpacing = 25.7;
-    private const double StrokeWidth = 1.0;
-    private const string SquigglePath =
-        "M -18.1 2.5 C -17.9 1.2 -17.4 -0.7 -16.8 -2.1 C -16.1 -3.4 -15.3 -4.9 -14.2 -5.8 " +
-        "C -13.1 -6.6 -11.6 -7 -10.3 -7.3 C -9 -7.6 -7.6 -7.6 -6.2 -7.5 C -4.8 -7.4 -3.4 -7 -2.1 -6.6 " +
-        "C -0.7 -6.2 0.7 -5.4 2.1 -5.2 C 3.4 -4.9 4.8 -4.7 6.2 -4.8 C 7.6 -4.9 9 -5.3 10.3 -5.8 " +
-        "C 11.6 -6.3 12.9 -7.5 13.9 -7.9 C 14.9 -8.3 15.6 -8.5 16.3 -8.1 C 16.9 -7.7 17.6 -6.5 17.9 -5.6 " +
-        "C 18.2 -4.6 18.3 -3.7 18.1 -2.5 C 17.9 -1.2 17.4 0.7 16.8 2.1 C 16.1 3.4 15.3 4.9 14.2 5.8 " +
-        "C 13.1 6.6 11.6 7 10.3 7.3 C 9 7.6 7.6 7.6 6.2 7.5 C 4.8 7.4 3.4 7 2.1 6.6 " +
-        "C 0.7 6.2 -0.7 5.4 -2.1 5.2 C -3.4 4.9 -4.8 4.7 -6.2 4.8 C -7.6 4.9 -9 5.3 -10.3 5.8 " +
-        "C -11.6 6.3 -12.9 7.5 -13.9 7.9 C -14.9 8.3 -15.6 8.5 -16.3 8.1 C -16.9 7.7 -17.6 6.5 -17.9 5.6 " +
-        "C -18.2 4.6 -18.3 3.7 -18.1 2.5 Z";
+    // Maße und Formen wie auf den echten Karten: siehe CardShapes (auch für die Beispielbilder genutzt).
+    private const double StrokeWidth = CardShapes.StrokeWidth;
 
     [Parameter, EditorRequired] public Card Card { get; set; }
     [Parameter] public bool Highlight { get; set; }

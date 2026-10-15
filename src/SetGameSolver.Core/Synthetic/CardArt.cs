@@ -4,7 +4,7 @@ namespace SetGameSolver.Core.Synthetic;
 
 /// <summary>
 /// Beschreibt eine Set-Karte geometrisch (Hochformat, Einheiten in mm, Ursprung oben links).
-/// Dient für synthetische Testbilder und das Beispielbild in der App.
+/// Dient für synthetische Testbilder (Pixel für Pixel); das Beispielbild der App zeichnet <see cref="SampleScene"/>.
 /// </summary>
 public static class CardArt
 {
